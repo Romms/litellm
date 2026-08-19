@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { parseAsString, useQueryState } from "nuqs";
+import { useUrlTab } from "@/hooks/useUrlTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronDown, Code, Plus } from "lucide-react";
 import { getGuardrailsList, deleteGuardrailCall } from "@/components/networking";
@@ -33,6 +34,8 @@ interface GuardrailsResponse {
   guardrails: Guardrail[];
 }
 
+const GUARDRAILS_PAGE_TABS = ["garden", "guardrails", "playground", "submitted"] as const;
+
 const GuardrailsPanel: React.FC<GuardrailsPanelProps> = ({ accessToken, userRole }) => {
   const [guardrailsList, setGuardrailsList] = useState<Guardrail[]>([]);
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
@@ -45,6 +48,7 @@ const GuardrailsPanel: React.FC<GuardrailsPanelProps> = ({ accessToken, userRole
     "guardrail",
     parseAsString.withOptions({ history: "push" }),
   );
+  const [activeTab, onTabChange] = useUrlTab(GUARDRAILS_PAGE_TABS, "guardrails");
   const isAdmin = userRole ? isAdminRole(userRole) : false;
 
   const fetchGuardrails = async () => {
@@ -129,7 +133,7 @@ const GuardrailsPanel: React.FC<GuardrailsPanelProps> = ({ accessToken, userRole
 
   return (
     <div className="w-full mx-auto flex-auto overflow-y-auto m-8 p-2">
-      <Tabs defaultValue="guardrails">
+      <Tabs value={activeTab} onValueChange={onTabChange}>
         <TabsList variant="line">
           {isAdmin && (
             <>

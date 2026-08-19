@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { parseAsString, useQueryState } from "nuqs";
+import { useUrlTab } from "@/hooks/useUrlTab";
+
+const POLICIES_PAGE_TABS = ["templates", "policies", "attachments", "simulator"] as const;
 import { Alert, AlertDescription, AlertTitle, AlertAction } from "@/components/shared/Alert";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -100,7 +103,7 @@ const PoliciesPanel: React.FC<PoliciesPanelProps> = ({ accessToken, userRole }) 
     "policy",
     parseAsString.withOptions({ history: "push" }),
   );
-  const [activeTab, setActiveTab] = useState<string>("templates");
+  const [activeTab, setActiveTab] = useUrlTab(POLICIES_PAGE_TABS, "templates");
   const [isDeleting, setIsDeleting] = useState(false);
   const [policyToDelete, setPolicyToDelete] = useState<Policy | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);

@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { parseAsString, useQueryState } from "nuqs";
+import { useUrlTab } from "@/hooks/useUrlTab";
+
+const VECTOR_STORE_PAGE_TABS = ["create", "manage", "test", "indexes"] as const;
 import { RefreshCw } from "lucide-react";
 import {
   vectorStoreListCall,
@@ -41,7 +44,8 @@ const VectorStoreManagement: React.FC<VectorStoreProps> = ({ accessToken, userID
   );
   const [editVectorStore, setEditVectorStore] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { onTabChange, hasVisited } = useVisitedTabs("create");
+  const [activeTab, onUrlTabChange] = useUrlTab(VECTOR_STORE_PAGE_TABS, "create");
+  const { onTabChange, hasVisited } = useVisitedTabs(activeTab);
 
   const fetchVectorStores = async () => {
     if (!accessToken) {
@@ -157,7 +161,13 @@ const VectorStoreManagement: React.FC<VectorStoreProps> = ({ accessToken, userID
           You can use vector stores to store and retrieve LLM embeddings.
         </p>
 
-        <Tabs defaultValue="create" onValueChange={onTabChange}>
+        <Tabs
+          value={activeTab}
+          onValueChange={(value: unknown) => {
+            onTabChange(value);
+            onUrlTabChange(String(value));
+          }}
+        >
           <TabsList variant="line" className="mb-6 h-auto w-full justify-start rounded-none p-0">
             <TabsTrigger value="create" className="flex-none rounded-none px-4 py-2">
               Create Vector Store

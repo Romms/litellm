@@ -1,5 +1,8 @@
 import { parseAsString, useQueryState } from "nuqs";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useUrlTab } from "@/hooks/useUrlTab";
+
+const USERS_PAGE_TABS = ["users", "default-settings"] as const;
 
 import BulkEditUserModal from "./BulkEditUsers";
 import BulkCreateUsersButton from "@/components/bulk_create_users_button";
@@ -62,6 +65,7 @@ const ViewUserDashboard: React.FC<ViewUserDashboardProps> = ({
   const queryClient = useQueryClient();
 
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: DEFAULT_PAGE_SIZE });
+  const [activeTab, onTabChange] = useUrlTab(USERS_PAGE_TABS, "users");
   const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORTING);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [searchInput, setSearchInput] = useState("");
@@ -362,7 +366,7 @@ const ViewUserDashboard: React.FC<ViewUserDashboardProps> = ({
       </div>
 
       {isProxyAdmin ? (
-        <Tabs defaultValue="users" className="gap-0">
+        <Tabs value={activeTab} onValueChange={onTabChange} className="gap-0">
           <TabsList variant="line" className="mb-4">
             <TabsTrigger value="users" className="flex-none data-active:text-primary after:bg-primary">
               Users

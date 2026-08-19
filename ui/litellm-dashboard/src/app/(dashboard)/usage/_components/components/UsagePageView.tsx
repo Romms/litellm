@@ -62,6 +62,19 @@ import { TOP_MODEL_LIMITS } from "./EntityUsage/TopModelView";
 import TopKeyView from "@/components/UsagePage/components/EntityUsage/TopKeyView";
 import UsageAIChatPanel from "./UsageAIChatPanel";
 import { UsageOption, UsageViewSelect } from "./UsageViewSelect/UsageViewSelect";
+import { useUrlTab } from "@/hooks/useUrlTab";
+
+const USAGE_VIEWS = [
+  "global",
+  "my-usage",
+  "organization",
+  "team",
+  "customer",
+  "tag",
+  "agent",
+  "user",
+  "user-agent-activity",
+] as const satisfies readonly UsageOption[];
 
 interface UsagePageProps {
   teams: Team[];
@@ -112,7 +125,7 @@ const UsagePage: React.FC<UsagePageProps> = ({ teams, organizations }) => {
   const [isCloudZeroModalOpen, setIsCloudZeroModalOpen] = useState(false);
   const [isGlobalExportModalOpen, setIsGlobalExportModalOpen] = useState(false);
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
-  const [selectedUsageView, setUsageView] = useState<UsageOption>("global");
+  const [selectedUsageView, setUsageView] = useUrlTab(USAGE_VIEWS, "global", "view");
   // Org-admin membership is read from the server, so unlike the other usage
   // views this one can be revoked while the page is open. Derive the view in
   // render rather than storing it, so the fallback lands on the same paint and

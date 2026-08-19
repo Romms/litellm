@@ -44,6 +44,9 @@ import { TOOLS_OAUTH_UI_STATE_KEY } from "@/hooks/mcpOAuthUtils";
 import UserEnvVarsModal from "./UserEnvVarsModal";
 import { listMCPUserEnvVarStatus } from "@/components/networking";
 import { useFillEnvVarsDeepLink, useServerDetailRouting } from "../serverDetailRouting";
+import { useUrlTab } from "@/hooks/useUrlTab";
+
+const MCP_PAGE_TABS = ["servers", "toolsets", "connect", "semantic-filter", "network-settings", "submitted"] as const;
 
 type SortKey = "created_desc" | "updated_desc" | "name_asc" | "health";
 
@@ -152,6 +155,7 @@ const MCPServers: React.FC<MCPServerProps> = ({ accessToken, userRole, userID })
     restoreServer,
     close: closeServerDetail,
   } = useServerDetailRouting(toolsTabServerId);
+  const [activeTab, onTabChange] = useUrlTab(MCP_PAGE_TABS, "servers");
   const [editServer, setEditServer] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
   const [selectedMcpAccessGroup, setSelectedMcpAccessGroup] = useState<string>("all");
@@ -508,7 +512,7 @@ const MCPServers: React.FC<MCPServerProps> = ({ accessToken, userRole, userID })
           }}
           accessToken={accessToken}
         />
-        <Tabs defaultValue="servers" className="mt-2 w-full">
+        <Tabs value={activeTab} onValueChange={onTabChange} className="mt-2 w-full">
           <TabsList variant="line" className="h-auto w-full justify-start rounded-none border-b p-0">
             <TabsTrigger value="servers" className="flex-none rounded-none px-4 py-2">
               All Servers

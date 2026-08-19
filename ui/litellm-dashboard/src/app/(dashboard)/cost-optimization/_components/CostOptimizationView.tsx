@@ -1,6 +1,9 @@
 "use client";
 
 import React from "react";
+import { useUrlTab } from "@/hooks/useUrlTab";
+
+const COST_OPTIMIZATION_PAGE_TABS = ["usage", "compression", "caching", "autorouter-usage"] as const;
 import { Info, PiggyBank } from "lucide-react";
 
 import useCan from "@/app/(dashboard)/hooks/useCan";
@@ -20,12 +23,15 @@ interface CostOptimizationViewProps {
 const CostOptimizationView: React.FC<CostOptimizationViewProps> = ({ accessToken, userId, userRole }) => {
   const activity = useDailyActivityRange(accessToken, userId, userRole);
   const canViewProxyWideCostData = useCan("viewProxyWideCostData");
-  const [visitedTabs, setVisitedTabs] = React.useState<readonly string[]>(["usage"]);
+  const [activeTab, onUrlTabChange] = useUrlTab(COST_OPTIMIZATION_PAGE_TABS, "usage");
+  const [visitedTabs, setVisitedTabs] = React.useState<readonly string[]>([activeTab]);
 
   const handleTabChange = (value: unknown) => {
     if (typeof value !== "string") {
       return;
     }
+
+    onUrlTabChange(value);
 
     setVisitedTabs((currentTabs) => (currentTabs.includes(value) ? currentTabs : [...currentTabs, value]));
   };
@@ -62,7 +68,7 @@ const CostOptimizationView: React.FC<CostOptimizationViewProps> = ({ accessToken
         </p>
       </div>
 
-      <Tabs defaultValue="usage" onValueChange={handleTabChange}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList variant="line" className="h-auto w-full justify-start rounded-none p-0">
           <TabsTrigger value="usage" className="flex-none rounded-none px-4 py-2">
             Overall
