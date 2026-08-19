@@ -53,6 +53,18 @@ describe("useUrlTab", () => {
     expect(onUrlUpdate.mock.calls.at(-1)?.[0].searchParams.has("tab")).toBe(false);
   });
 
+  it("keeps the param when picking the default tab with clearOnDefault: false", async () => {
+    const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
+    const { result } = renderHook(() => useUrlTab(TABS, "overview", "tab", { clearOnDefault: false }), {
+      wrapper: withNuqsTestingAdapter({ searchParams: "?tab=logs", onUrlUpdate }),
+    });
+    await act(async () => {
+      result.current[1]("overview");
+    });
+    await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+    expect(onUrlUpdate.mock.calls.at(-1)?.[0].searchParams.get("tab")).toBe("overview");
+  });
+
   it("uses a custom param name when given", () => {
     const { result } = renderHook(() => useUrlTab(TABS, "overview", "view"), {
       wrapper: withNuqsTestingAdapter({ searchParams: "?view=logs" }),

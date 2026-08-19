@@ -10,10 +10,16 @@ export function useUrlTab<T extends string>(
   tabs: readonly T[],
   defaultTab: T,
   paramName: string = "tab",
+  // clearOnDefault: false keeps the param in the URL when the default tab is
+  // picked; required when defaultTab is computed from props, since clearing
+  // the param would otherwise snap back to that dynamic default.
+  opts: { clearOnDefault?: boolean } = {},
 ): readonly [T, (value: string) => void] {
   const [tab, setTab] = useQueryState(
     paramName,
-    parseAsStringLiteral(tabs).withDefault(defaultTab).withOptions({ history: "push" }),
+    parseAsStringLiteral(tabs)
+      .withDefault(defaultTab)
+      .withOptions({ history: "push", clearOnDefault: opts.clearOnDefault ?? true }),
   );
 
   const onTabChange = useCallback(

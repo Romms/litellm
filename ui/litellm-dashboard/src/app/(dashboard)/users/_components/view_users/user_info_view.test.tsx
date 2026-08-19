@@ -1,4 +1,9 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render as rtlRender, screen, waitFor, within } from "@testing-library/react";
+import { withNuqsTestingAdapter } from "nuqs/adapters/testing";
+
+const render: typeof rtlRender = (ui, options) =>
+  rtlRender(ui, { wrapper: withNuqsTestingAdapter({ hasMemory: true }), ...options });
+
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import UserInfoView from "./user_info_view";
@@ -108,6 +113,13 @@ describe("UserInfoView", () => {
     mockUserUpdateUserCall.mockResolvedValue({});
     mockFetchMCPServers.mockResolvedValue([MCP_SERVER]);
     mockListMCPTools.mockResolvedValue({ tools: [{ name: "list_issues", description: "List issues" }] });
+  });
+
+  it("opens the Details tab from an ?info_tab= deep link", async () => {
+    rtlRender(<UserInfoView {...defaultProps} />, {
+      wrapper: withNuqsTestingAdapter({ searchParams: "?info_tab=details", hasMemory: true }),
+    });
+    expect(await screen.findByRole("tab", { name: "Details", selected: true })).toBeInTheDocument();
   });
 
   it("should render the loading state", () => {

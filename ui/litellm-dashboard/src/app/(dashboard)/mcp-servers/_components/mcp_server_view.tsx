@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useUrlTab } from "@/hooks/useUrlTab";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,8 @@ import MCPServerCostDisplay from "./mcp_server_cost_display";
 import { getMaskedAndFullUrl } from "./utils";
 import { copyToClipboard as utilCopyToClipboard } from "@/utils/dataUtils";
 import { CheckIcon, CopyIcon } from "lucide-react";
+
+const MCP_SERVER_INFO_TABS = ["overview", "tools", "settings"] as const;
 
 interface MCPServerViewProps {
   mcpServer: MCPServer;
@@ -62,7 +65,11 @@ export const MCPServerView: React.FC<MCPServerViewProps> = ({
   const [editing, setEditing] = useState(isEditing || returningFromEditOAuth);
   const [showFullUrl, setShowFullUrl] = useState(false);
   const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
-  const [selectedTabIndex, setSelectedTabIndex] = useState(returningFromEditOAuth ? 2 : initialTabIndex);
+  const restoredInfoTab = initialTabIndex === 1 ? "tools" : "overview";
+  const defaultInfoTab = returningFromEditOAuth ? "settings" : restoredInfoTab;
+  const [selectedInfoTab, onInfoTabChange] = useUrlTab(MCP_SERVER_INFO_TABS, defaultInfoTab, "info_tab", {
+    clearOnDefault: false,
+  });
 
   const handleSuccess = (updated: MCPServer) => {
     setEditing(false);
@@ -129,23 +136,23 @@ export const MCPServerView: React.FC<MCPServerViewProps> = ({
         {mcpServer.description && <p className="mt-2 text-sm text-muted-foreground">{mcpServer.description}</p>}
       </div>
 
-      <Tabs value={String(selectedTabIndex)} onValueChange={(v: unknown) => setSelectedTabIndex(Number(v))}>
+      <Tabs value={selectedInfoTab} onValueChange={onInfoTabChange}>
         <TabsList className="mb-4">
-          <TabsTrigger value="0" className="flex-none">
+          <TabsTrigger value="overview" className="flex-none">
             Overview
           </TabsTrigger>
-          <TabsTrigger value="1" className="flex-none">
+          <TabsTrigger value="tools" className="flex-none">
             MCP Tools
           </TabsTrigger>
           {isProxyAdmin && (
-            <TabsTrigger value="2" className="flex-none">
+            <TabsTrigger value="settings" className="flex-none">
               Settings
             </TabsTrigger>
           )}
         </TabsList>
 
         {/* Overview Panel */}
-        <TabsContent value="0">
+        <TabsContent value="overview">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Card className="p-4">
               <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Transport</p>
@@ -192,7 +199,7 @@ export const MCPServerView: React.FC<MCPServerViewProps> = ({
         </TabsContent>
 
         {/* Tool Panel */}
-        <TabsContent value="1">
+        <TabsContent value="tools">
           <MCPToolsViewer
             serverId={mcpServer.server_id}
             accessToken={accessToken}
@@ -209,7 +216,7 @@ export const MCPServerView: React.FC<MCPServerViewProps> = ({
         </TabsContent>
 
         {/* Settings Panel */}
-        <TabsContent value="2">
+        <TabsContent value="settings">
           <Card className="p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-medium">MCP Server Settings</h2>

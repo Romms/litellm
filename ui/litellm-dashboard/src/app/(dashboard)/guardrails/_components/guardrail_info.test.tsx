@@ -1,5 +1,10 @@
 import * as networking from "@/components/networking";
-import { fireEvent, render, waitFor, within } from "@testing-library/react";
+import { fireEvent, render as rtlRender, waitFor, within } from "@testing-library/react";
+import { withNuqsTestingAdapter } from "nuqs/adapters/testing";
+
+const render: typeof rtlRender = (ui, options) =>
+  rtlRender(ui, { wrapper: withNuqsTestingAdapter({ hasMemory: true }), ...options });
+
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import GuardrailInfoView from "./guardrail_info";

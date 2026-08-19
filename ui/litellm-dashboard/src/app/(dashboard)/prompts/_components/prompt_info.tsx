@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useUrlTab } from "@/hooks/useUrlTab";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -32,6 +33,11 @@ const PromptInfoView: React.FC<PromptInfoProps> = ({ promptId, onClose, accessTo
   const [promptTemplate, setPromptTemplate] = useState<PromptTemplateBase | null>(null);
   const [rawApiResponse, setRawApiResponse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeInfoTab, onInfoTabChange] = useUrlTab(
+    ["overview", "prompt-template", "raw-json"] as const,
+    "overview",
+    "info_tab",
+  );
   const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -279,7 +285,7 @@ const PromptInfoView: React.FC<PromptInfoProps> = ({ promptId, onClose, accessTo
         </div>
       )}
 
-      <Tabs defaultValue="overview">
+      <Tabs value={activeInfoTab} onValueChange={onInfoTabChange}>
         <TabsList variant="line" className="mb-4 h-auto w-full justify-start rounded-none border-b p-0">
           <TabsTrigger value="overview" className="flex-none rounded-none px-4 py-2">
             Overview

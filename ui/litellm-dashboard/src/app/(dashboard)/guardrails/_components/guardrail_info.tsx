@@ -1,3 +1,4 @@
+import { useUrlTab } from "@/hooks/useUrlTab";
 import {
   getGuardrailInfo,
   getGuardrailProviderSpecificParams,
@@ -70,6 +71,7 @@ const GuardrailInfoView: React.FC<GuardrailInfoProps> = ({ guardrailId, onClose,
   const [guardrailData, setGuardrailData] = useState<any>(null);
   const [guardrailProviderSpecificParams, setGuardrailProviderSpecificParams] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeInfoTab, onInfoTabChange] = useUrlTab(["overview", "settings"] as const, "overview", "info_tab");
   const [isEditing, setIsEditing] = useState(false);
   const form = useForm<GuardrailFormValues>({ defaultValues: {} });
   const [selectedPiiEntities, setSelectedPiiEntities] = useState<string[]>([]);
@@ -532,7 +534,7 @@ const GuardrailInfoView: React.FC<GuardrailInfoProps> = ({ guardrailId, onClose,
         </div>
       </div>
 
-      <Tabs defaultValue="overview">
+      <Tabs value={activeInfoTab} onValueChange={onInfoTabChange}>
         <TabsList variant="line" className="mb-4 h-auto w-full justify-start rounded-none border-b p-0">
           <TabsTrigger value="overview" className="flex-none rounded-none px-4 py-2">
             Overview
