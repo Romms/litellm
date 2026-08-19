@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { parseAsString, useQueryState } from "nuqs";
 
 import { Plus, Upload } from "lucide-react";
 import { getPromptsList, PromptSpec, ListPromptsResponse, deletePromptCall } from "@/components/networking";
@@ -40,7 +41,10 @@ const PromptsPanel: React.FC<PromptsProps> = ({ accessToken, userRole }) => {
   const [promptsList, setPromptsList] = useState<PromptSpec[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedEnvironment, setSelectedEnvironment] = useState<string | undefined>(undefined);
-  const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
+  const [selectedPromptId, setSelectedPromptId] = useQueryState(
+    "prompt",
+    parseAsString.withOptions({ history: "push" }),
+  );
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [showEditorView, setShowEditorView] = useState(false);
   const [editPromptData, setEditPromptData] = useState<any>(null);
@@ -72,12 +76,12 @@ const PromptsPanel: React.FC<PromptsProps> = ({ accessToken, userRole }) => {
   }, [accessToken, selectedEnvironment]);
 
   const handlePromptClick = (promptId: string) => {
-    setSelectedPromptId(promptId);
+    void setSelectedPromptId(promptId);
   };
 
   const handleAddPrompt = () => {
     if (selectedPromptId) {
-      setSelectedPromptId(null);
+      void setSelectedPromptId(null);
     }
     setEditPromptData(null);
     setShowEditorView(true);
@@ -90,7 +94,7 @@ const PromptsPanel: React.FC<PromptsProps> = ({ accessToken, userRole }) => {
 
   const handleAddPromptFromFile = () => {
     if (selectedPromptId) {
-      setSelectedPromptId(null);
+      void setSelectedPromptId(null);
     }
     setIsAddModalVisible(true);
   };
@@ -108,7 +112,7 @@ const PromptsPanel: React.FC<PromptsProps> = ({ accessToken, userRole }) => {
     fetchPrompts();
     setShowEditorView(false);
     setEditPromptData(null);
-    setSelectedPromptId(null);
+    void setSelectedPromptId(null);
   };
 
   const handleDeleteClick = (promptId: string, promptName: string) => {
@@ -148,7 +152,7 @@ const PromptsPanel: React.FC<PromptsProps> = ({ accessToken, userRole }) => {
       ) : selectedPromptId ? (
         <PromptInfoView
           promptId={selectedPromptId}
-          onClose={() => setSelectedPromptId(null)}
+          onClose={() => void setSelectedPromptId(null)}
           accessToken={accessToken}
           isAdmin={canModify}
           onDelete={fetchPrompts}

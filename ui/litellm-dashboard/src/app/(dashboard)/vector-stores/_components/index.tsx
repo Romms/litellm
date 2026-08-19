@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { parseAsString, useQueryState } from "nuqs";
 import { RefreshCw } from "lucide-react";
 import {
   vectorStoreListCall,
@@ -34,7 +35,10 @@ const VectorStoreManagement: React.FC<VectorStoreProps> = ({ accessToken, userID
   const [vectorStoreToDelete, setVectorStoreToDelete] = useState<string | null>(null);
   const [lastRefreshed, setLastRefreshed] = useState("");
   const [credentials, setCredentials] = useState<CredentialItem[]>([]);
-  const [selectedVectorStoreId, setSelectedVectorStoreId] = useState<string | null>(null);
+  const [selectedVectorStoreId, setSelectedVectorStoreId] = useQueryState(
+    "vector_store",
+    parseAsString.withOptions({ history: "push" }),
+  );
   const [editVectorStore, setEditVectorStore] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { onTabChange, hasVisited } = useVisitedTabs("create");
@@ -79,17 +83,17 @@ const VectorStoreManagement: React.FC<VectorStoreProps> = ({ accessToken, userID
   };
 
   const handleView = (vectorStoreId: string) => {
-    setSelectedVectorStoreId(vectorStoreId);
+    void setSelectedVectorStoreId(vectorStoreId);
     setEditVectorStore(false);
   };
 
   const handleEdit = (vectorStoreId: string) => {
-    setSelectedVectorStoreId(vectorStoreId);
+    void setSelectedVectorStoreId(vectorStoreId);
     setEditVectorStore(true);
   };
 
   const handleCloseInfo = () => {
-    setSelectedVectorStoreId(null);
+    void setSelectedVectorStoreId(null);
     setEditVectorStore(false);
     fetchVectorStores();
   };
