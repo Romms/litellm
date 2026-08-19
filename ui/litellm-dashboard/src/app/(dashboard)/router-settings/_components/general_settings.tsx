@@ -1,4 +1,13 @@
 import React, { useState, useEffect } from "react";
+import { useUrlTab } from "@/hooks/useUrlTab";
+
+const ROUTER_SETTINGS_PAGE_TABS = [
+  "loadbalancing",
+  "fallbacks",
+  "general",
+  "prompt-caching",
+  "routing-groups",
+] as const;
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -185,6 +194,7 @@ export const PromptCachingPanel: React.FC<{
 
 const GeneralSettings: React.FC<GeneralSettingsPageProps> = ({ accessToken, userRole, userID }) => {
   const [generalSettings, setGeneralSettings] = useState<generalSettingsItem[]>([]);
+  const [activeTab, onTabChange] = useUrlTab({ tabs: ROUTER_SETTINGS_PAGE_TABS, defaultTab: "loadbalancing" });
 
   useEffect(() => {
     if (!accessToken) {
@@ -253,7 +263,7 @@ const GeneralSettings: React.FC<GeneralSettingsPageProps> = ({ accessToken, user
 
   return (
     <div className="w-full">
-      <Tabs defaultValue="loadbalancing" className="h-[75vh] w-full">
+      <Tabs value={activeTab} onValueChange={onTabChange} className="h-[75vh] w-full">
         <TabsList variant="line" className="mx-8 mt-4">
           <TabsTrigger value="loadbalancing">Loadbalancing</TabsTrigger>
           <TabsTrigger value="routing-groups">Routing Groups</TabsTrigger>

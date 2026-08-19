@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import { withNuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import GuardrailsPanel from "./GuardrailsPanel";
 import { getGuardrailsList, deleteGuardrailCall } from "@/components/networking";
@@ -15,16 +16,21 @@ vi.mock("./add_guardrail_form", () => ({
 
 vi.mock("./guardrail_table", () => ({
   __esModule: true,
-  default: ({ guardrailsList, onDeleteClick }: any) => (
+  default: ({ guardrailsList, onDeleteClick, onGuardrailClick }: any) => (
     <div>
       <div>Mock Guardrail Table</div>
       {guardrailsList.length > 0 && (
-        <button
-          data-testid="delete-button"
-          onClick={() => onDeleteClick(guardrailsList[0].guardrail_id, guardrailsList[0].guardrail_name)}
-        >
-          Delete
-        </button>
+        <>
+          <button
+            data-testid="delete-button"
+            onClick={() => onDeleteClick(guardrailsList[0].guardrail_id, guardrailsList[0].guardrail_name)}
+          >
+            Delete
+          </button>
+          <button data-testid="open-button" onClick={() => onGuardrailClick(guardrailsList[0].guardrail_id)}>
+            Open
+          </button>
+        </>
       )}
     </div>
   ),
@@ -32,7 +38,11 @@ vi.mock("./guardrail_table", () => ({
 
 vi.mock("./guardrail_info", () => ({
   __esModule: true,
-  default: () => <div>Mock Guardrail Info View</div>,
+  default: (props: { guardrailId: string; onClose: () => void }) => (
+    <div data-testid="guardrail-info" data-guardrail-id={props.guardrailId}>
+      <button data-testid="guardrail-info-close" onClick={props.onClose} />
+    </div>
+  ),
 }));
 
 vi.mock("./GuardrailTestPlayground", async () => {
@@ -90,6 +100,9 @@ describe("GuardrailsPanel", () => {
   const mockGetGuardrailsList = vi.mocked(getGuardrailsList);
   const mockDeleteGuardrailCall = vi.mocked(deleteGuardrailCall);
 
+  const renderPanel = (nuqs: { searchParams?: string; onUrlUpdate?: OnUrlUpdateFunction } = {}) =>
+    render(<GuardrailsPanel {...defaultProps} />, { wrapper: withNuqsTestingAdapter({ ...nuqs, hasMemory: true }) });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetGuardrailsList.mockResolvedValue({
@@ -112,7 +125,7 @@ describe("GuardrailsPanel", () => {
   });
 
   it("should render the component", async () => {
-    render(<GuardrailsPanel {...defaultProps} />);
+    renderPanel();
     expect(screen.getByText("Guardrails")).toBeInTheDocument();
     // Activate the Guardrails tab so its content (including the Add button) is rendered
     fireEvent.click(screen.getByText("Guardrails"));
@@ -120,7 +133,7 @@ describe("GuardrailsPanel", () => {
   });
 
   it("should delete the clicked guardrail after confirming in the modal", async () => {
-    render(<GuardrailsPanel {...defaultProps} />);
+    renderPanel();
     fireEvent.click(screen.getByText("Guardrails"));
 
     fireEvent.click(await screen.findByTestId("delete-button"));
@@ -139,14 +152,14 @@ describe("GuardrailsPanel", () => {
   });
 
   it("should mount every tab panel up front so panel state survives tab switches", async () => {
-    render(<GuardrailsPanel {...defaultProps} />);
+    renderPanel();
 
     expect(await screen.findByLabelText("playground draft")).toBeInTheDocument();
     expect(screen.getByText("Mock Team Guardrails Tab")).toBeInTheDocument();
   });
 
   it("should keep test playground state when switching tabs away and back", async () => {
-    render(<GuardrailsPanel {...defaultProps} />);
+    renderPanel();
 
     fireEvent.click(screen.getByText("Test Playground"));
 
@@ -161,7 +174,7 @@ describe("GuardrailsPanel", () => {
   });
 
   it("should not delete anything when the modal is cancelled", async () => {
-    render(<GuardrailsPanel {...defaultProps} />);
+    renderPanel();
     fireEvent.click(screen.getByText("Guardrails"));
 
     fireEvent.click(await screen.findByTestId("delete-button"));
@@ -170,5 +183,25 @@ describe("GuardrailsPanel", () => {
     fireEvent.click(modal.getByRole("button", { name: "Cancel" }));
 
     expect(mockDeleteGuardrailCall).not.toHaveBeenCalled();
+  });
+
+  it("should open guardrail info from a ?guardrail= deep link", () => {
+    renderPanel({ searchParams: "?guardrail=gr-42" });
+    fireEvent.click(screen.getByText("Guardrails"));
+    expect(screen.getByTestId("guardrail-info")).toHaveAttribute("data-guardrail-id", "gr-42");
+  });
+
+  it("should write ?guardrail= to the URL on row click and clear it on close", async () => {
+    const onUrlUpdate = vi.fn<OnUrlUpdateFunction>();
+    renderPanel({ onUrlUpdate });
+    fireEvent.click(screen.getByText("Guardrails"));
+
+    fireEvent.click(await screen.findByTestId("open-button"));
+    await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+    expect(onUrlUpdate.mock.calls.at(-1)?.[0].searchParams.get("guardrail")).toBe("test-guardrail-1");
+    expect(onUrlUpdate.mock.calls.at(-1)?.[0].options.history).toBe("push");
+
+    fireEvent.click(screen.getByTestId("guardrail-info-close"));
+    await waitFor(() => expect(onUrlUpdate.mock.calls.at(-1)?.[0].searchParams.has("guardrail")).toBe(false));
   });
 });

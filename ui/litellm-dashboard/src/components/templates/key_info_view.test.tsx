@@ -216,6 +216,23 @@ describe("KeyInfoView", () => {
     });
   });
 
+  it("opens the Settings tab from an ?info_tab= deep link", async () => {
+    vi.mocked(useAuthorized).mockReturnValue(baseUseAuthorizedMock);
+
+    renderWithProviders(
+      <KeyInfoView
+        keyData={MOCK_KEY_DATA}
+        onClose={() => {}}
+        keyId={"test-key-id"}
+        onKeyDataUpdate={() => {}}
+        teams={[]}
+      />,
+      { searchParams: "?info_tab=settings" },
+    );
+
+    expect(await screen.findByRole("tab", { name: "Settings", selected: true })).toBeInTheDocument();
+  });
+
   it("should render the key's saved router fallbacks", async () => {
     vi.mocked(useAuthorized).mockReturnValue(baseUseAuthorizedMock);
 

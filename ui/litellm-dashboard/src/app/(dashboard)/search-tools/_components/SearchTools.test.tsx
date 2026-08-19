@@ -1,4 +1,5 @@
 import * as roles from "@/utils/roles";
+import { withNuqsTestingAdapter } from "nuqs/adapters/testing";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -100,7 +101,7 @@ const mockAvailableProviders: AvailableSearchProvider[] = [
   },
 ];
 
-const createWrapper = () => {
+const createWrapper = (nuqs: { searchParams?: string } = {}) => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -108,8 +109,11 @@ const createWrapper = () => {
       },
     },
   });
+  const NuqsAdapter = withNuqsTestingAdapter({ searchParams: nuqs.searchParams, hasMemory: true });
   const Wrapper = ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <NuqsAdapter>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    </NuqsAdapter>
   );
   Wrapper.displayName = "TestWrapper";
   return Wrapper;
@@ -237,6 +241,13 @@ describe("SearchTools", () => {
     await waitFor(() => {
       expect(screen.queryByTestId("search-tool-view")).not.toBeInTheDocument();
       expect(screen.getByText("Perplexity Search")).toBeInTheDocument();
+    });
+  });
+
+  it("should open the search tool view from a ?tool= deep link", async () => {
+    render(<SearchTools {...defaultProps} />, { wrapper: createWrapper({ searchParams: "?tool=tool-1" }) });
+    await waitFor(() => {
+      expect(screen.getByText("Search Tool View: Perplexity Search")).toBeInTheDocument();
     });
   });
 });

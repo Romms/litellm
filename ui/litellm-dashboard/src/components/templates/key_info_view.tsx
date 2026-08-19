@@ -1,4 +1,5 @@
 import useAuthorized from "@/app/(dashboard)/hooks/useAuthorized";
+import { useUrlTab } from "@/hooks/useUrlTab";
 import { useProjects } from "@/app/(dashboard)/hooks/projects/useProjects";
 import { useUISettings } from "@/app/(dashboard)/hooks/uiSettings/useUISettings";
 import useTeams from "@/app/(dashboard)/hooks/useTeams";
@@ -79,6 +80,11 @@ export default function KeyInfoView({
   backButtonText = "Back to Keys",
 }: KeyInfoViewProps) {
   const { accessToken, userId: userID, userRole, premiumUser } = useAuthorized();
+  const [activeInfoTab, onInfoTabChange] = useUrlTab({
+    tabs: ["overview", "settings"] as const,
+    defaultTab: "overview",
+    paramName: "info_tab",
+  });
   const queryClient = useQueryClient();
   const canEditGuardrails = premiumUser || (userRole != null && rolesWithWriteAccess.includes(userRole));
   const { teams: teamsData } = useTeams();
@@ -598,7 +604,7 @@ export default function KeyInfoView({
         </DialogContent>
       </Dialog>
 
-      <Tabs defaultValue="overview">
+      <Tabs value={activeInfoTab} onValueChange={onInfoTabChange}>
         <TabsList className="mb-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>

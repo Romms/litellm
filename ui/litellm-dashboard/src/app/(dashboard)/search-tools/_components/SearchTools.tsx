@@ -2,6 +2,7 @@ import { isAdminRole } from "@/utils/roles";
 import { useQuery } from "@tanstack/react-query";
 import { Modal } from "antd";
 import React, { useState } from "react";
+import { parseAsString, useQueryState } from "nuqs";
 import { z } from "zod/v4";
 import DeleteResourceModal from "@/components/common_components/DeleteResourceModal";
 import { toast } from "@/lib/toast";
@@ -73,14 +74,14 @@ const SearchTools: React.FC<SearchToolsProps> = ({ accessToken, userRole, userID
   const [toolIdToDelete, setToolToDelete] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
+  const [selectedToolId, setSelectedToolId] = useQueryState("tool", parseAsString.withOptions({ history: "push" }));
   const [editTool, setEditTool] = useState(false);
   const [isCreateModalVisible, setCreateModalVisible] = useState(false);
   const [isEditModalVisible, setEditModalVisible] = useState(false);
   const form = useZodForm(editSearchToolSchema, { defaultValues: EMPTY_EDIT_VALUES });
 
   const handleView = (toolId: string) => {
-    setSelectedToolId(toolId);
+    void setSelectedToolId(toolId);
     setEditTool(false);
   };
 
@@ -96,7 +97,7 @@ const SearchTools: React.FC<SearchToolsProps> = ({ accessToken, userRole, userID
       description: tool.search_tool_info?.description,
     };
     form.reset(editFormValues);
-    setSelectedToolId(toolId);
+    void setSelectedToolId(toolId);
     setEditModalVisible(true);
   };
 
@@ -148,7 +149,7 @@ const SearchTools: React.FC<SearchToolsProps> = ({ accessToken, userRole, userID
         toast.success("Search tool updated successfully");
         setEditModalVisible(false);
         form.reset(EMPTY_EDIT_VALUES);
-        setSelectedToolId(null);
+        void setSelectedToolId(null);
         refetch();
       } catch (error) {
         console.error("Failed to update search tool:", error);
@@ -231,7 +232,7 @@ const SearchTools: React.FC<SearchToolsProps> = ({ accessToken, userRole, userID
         }
         onBack={() => {
           setEditTool(false);
-          setSelectedToolId(null);
+          void setSelectedToolId(null);
           refetch();
         }}
         isEditing={editTool}
@@ -291,7 +292,7 @@ const SearchTools: React.FC<SearchToolsProps> = ({ accessToken, userRole, userID
         onCancel={() => {
           setEditModalVisible(false);
           form.reset(EMPTY_EDIT_VALUES);
-          setSelectedToolId(null);
+          void setSelectedToolId(null);
         }}
         width={600}
       >

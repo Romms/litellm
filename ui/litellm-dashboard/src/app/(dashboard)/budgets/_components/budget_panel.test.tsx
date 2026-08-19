@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { withNuqsTestingAdapter } from "nuqs/adapters/testing";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
@@ -71,6 +72,7 @@ const renderPanel = () => {
     <QueryClientProvider client={client}>
       <BudgetPanel accessToken="sk-test" />
     </QueryClientProvider>,
+    { wrapper: withNuqsTestingAdapter({ hasMemory: true }) },
   );
 };
 

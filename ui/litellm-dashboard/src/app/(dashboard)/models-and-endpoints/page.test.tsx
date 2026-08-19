@@ -1,4 +1,5 @@
 /* @vitest-environment jsdom */
+import { withNuqsTestingAdapter } from "nuqs/adapters/testing";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -47,6 +48,7 @@ const renderPage = () => {
     <QueryClientProvider client={queryClient}>
       <ModelsAndEndpointsPage />
     </QueryClientProvider>,
+    { wrapper: withNuqsTestingAdapter({ hasMemory: true }) },
   );
 };
 

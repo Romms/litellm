@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useUrlTab } from "@/hooks/useUrlTab";
 import { ArrowLeft, CircleHelp } from "lucide-react";
 import { z } from "zod/v4";
 import {
@@ -90,6 +91,11 @@ const VectorStoreInfoView: React.FC<VectorStoreInfoViewProps> = ({
 }) => {
   const form = useZodForm(vectorStoreEditSchema, { defaultValues: EMPTY_VALUES });
   const [vectorStoreDetails, setVectorStoreDetails] = useState<VectorStore | null>(null);
+  const [activeInfoTab, onInfoTabChange] = useUrlTab({
+    tabs: ["details", "test"] as const,
+    defaultTab: "details",
+    paramName: "info_tab",
+  });
   const [loadFailed, setLoadFailed] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(editVectorStore);
   const [metadataString, setMetadataString] = useState<string>("{}");
@@ -216,7 +222,7 @@ const VectorStoreInfoView: React.FC<VectorStoreInfoViewProps> = ({
         {is_admin && !isEditing && <Button onClick={startEditing}>Edit Vector Store</Button>}
       </div>
 
-      <Tabs defaultValue="details">
+      <Tabs value={activeInfoTab} onValueChange={onInfoTabChange}>
         <TabsList variant="line" className="mb-6 h-auto w-full justify-start rounded-none p-0">
           <TabsTrigger value="details" className="flex-none rounded-none px-4 py-2">
             Details

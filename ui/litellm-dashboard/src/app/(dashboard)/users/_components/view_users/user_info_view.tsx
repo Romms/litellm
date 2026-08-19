@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useUrlTab } from "@/hooks/useUrlTab";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -94,7 +95,12 @@ export default function UserInfoView({
   const [isInvitationLinkModalVisible, setIsInvitationLinkModalVisible] = useState(false);
   const [invitationLinkData, setInvitationLinkData] = useState<InvitationLink | null>(null);
   const [baseUrl, setBaseUrl] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>(initialTab === 1 ? "details" : "overview");
+  const [activeTab, setActiveTab] = useUrlTab({
+    tabs: ["overview", "details"] as const,
+    defaultTab: initialTab === 1 ? "details" : "overview",
+    paramName: "info_tab",
+    clearOnDefault: false,
+  });
   const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
   const [isTeamsExpanded, setIsTeamsExpanded] = useState(false);
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
