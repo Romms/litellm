@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { parseAsString, useQueryState } from "nuqs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronDown, Code, Plus } from "lucide-react";
 import { getGuardrailsList, deleteGuardrailCall } from "@/components/networking";
@@ -40,7 +41,10 @@ const GuardrailsPanel: React.FC<GuardrailsPanelProps> = ({ accessToken, userRole
   const [isDeleting, setIsDeleting] = useState(false);
   const [guardrailToDelete, setGuardrailToDelete] = useState<Guardrail | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedGuardrailId, setSelectedGuardrailId] = useState<string | null>(null);
+  const [selectedGuardrailId, setSelectedGuardrailId] = useQueryState(
+    "guardrail",
+    parseAsString.withOptions({ history: "push" }),
+  );
   const isAdmin = userRole ? isAdminRole(userRole) : false;
 
   const fetchGuardrails = async () => {
@@ -65,14 +69,14 @@ const GuardrailsPanel: React.FC<GuardrailsPanelProps> = ({ accessToken, userRole
 
   const handleAddGuardrail = () => {
     if (selectedGuardrailId) {
-      setSelectedGuardrailId(null);
+      void setSelectedGuardrailId(null);
     }
     setIsAddModalVisible(true);
   };
 
   const handleAddCustomCodeGuardrail = () => {
     if (selectedGuardrailId) {
-      setSelectedGuardrailId(null);
+      void setSelectedGuardrailId(null);
     }
     setIsCustomCodeModalVisible(true);
   };
@@ -175,7 +179,7 @@ const GuardrailsPanel: React.FC<GuardrailsPanelProps> = ({ accessToken, userRole
               {selectedGuardrailId ? (
                 <GuardrailInfoView
                   guardrailId={selectedGuardrailId}
-                  onClose={() => setSelectedGuardrailId(null)}
+                  onClose={() => void setSelectedGuardrailId(null)}
                   accessToken={accessToken}
                   isAdmin={isAdmin}
                 />
@@ -184,7 +188,7 @@ const GuardrailsPanel: React.FC<GuardrailsPanelProps> = ({ accessToken, userRole
                   guardrailsList={guardrailsList}
                   isLoading={isLoading}
                   onDeleteClick={handleDeleteClick}
-                  onGuardrailClick={(id) => setSelectedGuardrailId(id)}
+                  onGuardrailClick={(id) => void setSelectedGuardrailId(id)}
                 />
               )}
 
