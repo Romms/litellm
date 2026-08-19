@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useUrlTab } from "@/hooks/useUrlTab";
+
+const COST_TRACKING_PAGE_TABS = ["discounts", "test-it"] as const;
 import { ChevronDown } from "lucide-react";
 import { Modal } from "antd";
 import {
@@ -55,6 +58,7 @@ const SectionHeader: React.FC<{ title: string; description: string }> = ({ title
 
 const CostTrackingSettings: React.FC<CostTrackingSettingsProps> = ({ userID, userRole, accessToken }) => {
   const [selectedProvider, setSelectedProvider] = useState<string | undefined>(undefined);
+  const [activeTab, onTabChange] = useUrlTab({ tabs: COST_TRACKING_PAGE_TABS, defaultTab: "discounts" });
   const [newDiscount, setNewDiscount] = useState<string>("");
   const [isFetching, setIsFetching] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -196,7 +200,7 @@ const CostTrackingSettings: React.FC<CostTrackingSettingsProps> = ({ userID, use
               description="Apply percentage-based discounts to reduce costs for specific providers"
             />
             <CollapsibleContent className="px-0">
-              <Tabs defaultValue="discounts">
+              <Tabs value={activeTab} onValueChange={onTabChange}>
                 <TabsList className="mx-6 mt-4">
                   <TabsTrigger value="discounts">Discounts</TabsTrigger>
                   <TabsTrigger value="test-it">Test It</TabsTrigger>

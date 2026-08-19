@@ -1,6 +1,7 @@
 import React from "react";
 import { render, waitFor, screen, act, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import MCPServers from "./mcp_servers";
@@ -17,6 +18,8 @@ vi.mock("@/components/networking", () => ({
   updateConfigFieldSetting: vi.fn().mockResolvedValue(undefined),
   deleteConfigFieldSetting: vi.fn().mockResolvedValue(undefined),
   listMCPUserEnvVarStatus: vi.fn().mockResolvedValue([]),
+  listMCPTools: vi.fn().mockResolvedValue({ tools: [], error: null }),
+  getMCPOAuthUserCredentialStatus: vi.fn().mockResolvedValue({ has_credentials: false }),
 }));
 
 const createQueryClient = () =>
@@ -36,6 +39,18 @@ describe("MCPServers", () => {
     userID: "admin-user-id",
   };
 
+  const renderMCPServers = (
+    queryClient: QueryClient,
+    nuqs: { searchParams?: string; onUrlUpdate?: OnUrlUpdateFunction } = {},
+  ) =>
+    render(
+      <NuqsTestingAdapter searchParams={nuqs.searchParams} onUrlUpdate={nuqs.onUrlUpdate} hasMemory>
+        <QueryClientProvider client={queryClient}>
+          <MCPServers {...defaultProps} />
+        </QueryClientProvider>
+      </NuqsTestingAdapter>,
+    );
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -45,11 +60,7 @@ describe("MCPServers", () => {
     vi.mocked(networking.fetchMCPServers).mockResolvedValue([]);
 
     const queryClient = createQueryClient();
-    const { getByText } = render(
-      <QueryClientProvider client={queryClient}>
-        <MCPServers {...defaultProps} />
-      </QueryClientProvider>,
-    );
+    const { getByText } = renderMCPServers(queryClient);
 
     // Wait for the component to load and check if title renders
     await waitFor(() => {
@@ -96,11 +107,7 @@ describe("MCPServers", () => {
     vi.mocked(networking.fetchMCPServers).mockResolvedValue(mockServers);
 
     const queryClient = createQueryClient();
-    const { getByText, getAllByText } = render(
-      <QueryClientProvider client={queryClient}>
-        <MCPServers {...defaultProps} />
-      </QueryClientProvider>,
-    );
+    const { getByText, getAllByText } = renderMCPServers(queryClient);
 
     // Wait for the component to load
     await waitFor(() => {
@@ -168,11 +175,7 @@ describe("MCPServers", () => {
     vi.mocked(networking.fetchMCPServerHealth).mockResolvedValue(mockHealthStatuses);
 
     const queryClient = createQueryClient();
-    const { getByText } = render(
-      <QueryClientProvider client={queryClient}>
-        <MCPServers {...defaultProps} />
-      </QueryClientProvider>,
-    );
+    const { getByText } = renderMCPServers(queryClient);
 
     // Wait for the component to load
     await waitFor(() => {
@@ -211,11 +214,7 @@ describe("MCPServers", () => {
     );
 
     const queryClient = createQueryClient();
-    const { getByText } = render(
-      <QueryClientProvider client={queryClient}>
-        <MCPServers {...defaultProps} />
-      </QueryClientProvider>,
-    );
+    const { getByText } = renderMCPServers(queryClient);
 
     // Wait for the component to load
     await waitFor(() => {
@@ -279,11 +278,7 @@ describe("MCPServers", () => {
     vi.mocked(networking.fetchMCPServerHealth).mockResolvedValue([]);
 
     const queryClient = createQueryClient();
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MCPServers {...defaultProps} />
-      </QueryClientProvider>,
-    );
+    renderMCPServers(queryClient);
 
     // Wait for the component to load
     await waitFor(() => {
@@ -374,9 +369,11 @@ describe("MCPServers", () => {
     });
 
     const { rerender } = render(
-      <QueryClientProvider client={queryClient}>
-        <MCPServers {...defaultProps} />
-      </QueryClientProvider>,
+      <NuqsTestingAdapter>
+        <QueryClientProvider client={queryClient}>
+          <MCPServers {...defaultProps} />
+        </QueryClientProvider>
+      </NuqsTestingAdapter>,
     );
 
     // Wait for the initial health fetch to complete
@@ -392,12 +389,61 @@ describe("MCPServers", () => {
     });
 
     rerender(
-      <QueryClientProvider client={queryClient}>
-        <MCPServers {...defaultProps} />
-      </QueryClientProvider>,
+      <NuqsTestingAdapter>
+        <QueryClientProvider client={queryClient}>
+          <MCPServers {...defaultProps} />
+        </QueryClientProvider>
+      </NuqsTestingAdapter>,
     );
 
     // The server list refresh must NOT trigger a second health check
     expect(networking.fetchMCPServerHealth).toHaveBeenCalledTimes(1);
+  });
+
+  describe("URL detail routing", () => {
+    const mockServers = [
+      {
+        server_id: "server-1",
+        server_name: "Test Server 1",
+        alias: "test-server-1",
+        url: "https://example.com/mcp",
+        transport: "http",
+        auth_type: "none",
+        created_at: "2024-01-01T00:00:00Z",
+        created_by: "user-1",
+        updated_at: "2024-01-01T00:00:00Z",
+        updated_by: "user-1",
+        teams: [],
+        mcp_access_groups: [],
+      },
+    ];
+
+    it("opens the server detail view from a ?server= deep link", async () => {
+      vi.mocked(networking.fetchMCPServers).mockResolvedValue(mockServers);
+      vi.mocked(networking.fetchMCPServerHealth).mockResolvedValue([]);
+
+      const queryClient = createQueryClient();
+      renderMCPServers(queryClient, { searchParams: "?server=server-1" });
+
+      expect(await screen.findByText("Back to All Servers")).toBeInTheDocument();
+      expect(await screen.findByText("Test Server 1")).toBeInTheDocument();
+    });
+
+    it("writes ?server= on card click and clears it on back", async () => {
+      vi.mocked(networking.fetchMCPServers).mockResolvedValue(mockServers);
+      vi.mocked(networking.fetchMCPServerHealth).mockResolvedValue([]);
+
+      const onUrlUpdate = vi.fn<OnUrlUpdateFunction>();
+      const queryClient = createQueryClient();
+      renderMCPServers(queryClient, { onUrlUpdate });
+
+      await userEvent.click(await screen.findByText("Test Server 1"));
+      await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+      expect(onUrlUpdate.mock.calls.at(-1)?.[0].searchParams.get("server")).toBe("server-1");
+      expect(onUrlUpdate.mock.calls.at(-1)?.[0].options.history).toBe("push");
+
+      await userEvent.click(await screen.findByText("Back to All Servers"));
+      await waitFor(() => expect(onUrlUpdate.mock.calls.at(-1)?.[0].searchParams.has("server")).toBe(false));
+    });
   });
 });

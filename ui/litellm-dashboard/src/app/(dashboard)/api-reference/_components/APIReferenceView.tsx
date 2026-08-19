@@ -1,5 +1,8 @@
 "use client";
 import React from "react";
+import { useUrlTab } from "@/hooks/useUrlTab";
+
+const API_REFERENCE_PAGE_TABS = ["openai", "llamaindex", "langchain"] as const;
 import CodeBlock from "@/components/CodeBlock";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DocLink from "./DocLink";
@@ -12,6 +15,7 @@ interface ApiRefProps {
 }
 
 const APIReferenceView: React.FC<ApiRefProps> = ({ proxySettings }) => {
+  const [activeTab, onTabChange] = useUrlTab({ tabs: API_REFERENCE_PAGE_TABS, defaultTab: "openai" });
   let base_url = "<your_proxy_base_url>";
   const customDocBaseUrl = proxySettings?.LITELLM_UI_API_DOC_BASE_URL;
   if (customDocBaseUrl && customDocBaseUrl.trim()) {
@@ -34,7 +38,7 @@ const APIReferenceView: React.FC<ApiRefProps> = ({ proxySettings }) => {
           point to your litellm proxy. Example Below{" "}
         </p>
 
-        <Tabs defaultValue="openai">
+        <Tabs value={activeTab} onValueChange={onTabChange}>
           <TabsList variant="line" className="border-b rounded-none w-full justify-start h-auto p-0">
             <TabsTrigger value="openai" className="rounded-none px-4 py-2 flex-none">
               OpenAI Python SDK

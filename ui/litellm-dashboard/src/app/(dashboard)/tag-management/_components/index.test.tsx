@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import { renderWithProviders } from "@/../tests/test-utils";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -27,7 +28,11 @@ vi.mock("./TagTable", () => ({
 
 vi.mock("./tag_info", () => ({
   __esModule: true,
-  default: () => <div>Mock Tag Info View</div>,
+  default: ({ tagId, onClose }: { tagId: string; onClose: () => void }) => (
+    <div data-testid="tag-info" data-tag-id={tagId}>
+      <button data-testid="tag-info-close" onClick={onClose} />
+    </div>
+  ),
 }));
 
 vi.mock("./components/CreateTagModal", () => ({
@@ -44,7 +49,7 @@ describe("TagManagement loading state", () => {
   });
 
   it("should resolve the loading state when accessToken is null instead of showing the skeleton forever", async () => {
-    render(<TagManagement accessToken={null} userID={null} userRole={null} />);
+    renderWithProviders(<TagManagement accessToken={null} userID={null} userRole={null} />);
     expect(await screen.findByText("table-loaded")).toBeInTheDocument();
     expect(mockTagListCall).not.toHaveBeenCalled();
   });
@@ -56,7 +61,7 @@ describe("TagManagement loading state", () => {
         resolveFetch = resolve;
       }),
     );
-    render(<TagManagement accessToken="sk-test" userID="user-1" userRole="Admin" />);
+    renderWithProviders(<TagManagement accessToken="sk-test" userID="user-1" userRole="Admin" />);
     expect(screen.getByText("table-loading")).toBeInTheDocument();
 
     resolveFetch({});
@@ -74,7 +79,7 @@ describe("TagManagement delete flow", () => {
   it("should confirm deletion through the shared DeleteResourceModal and call tagDeleteCall with the tag name", async () => {
     const user = userEvent.setup();
     mockTagDeleteCall.mockResolvedValue({});
-    render(<TagManagement accessToken="sk-test" userID="user-1" userRole="Admin" />);
+    renderWithProviders(<TagManagement accessToken="sk-test" userID="user-1" userRole="Admin" />);
     await screen.findByText("table-loaded");
 
     expect(screen.queryByText("Tag Information")).not.toBeInTheDocument();
@@ -91,7 +96,7 @@ describe("TagManagement delete flow", () => {
 
   it("should not call tagDeleteCall when the deletion is cancelled", async () => {
     const user = userEvent.setup();
-    render(<TagManagement accessToken="sk-test" userID="user-1" userRole="Admin" />);
+    renderWithProviders(<TagManagement accessToken="sk-test" userID="user-1" userRole="Admin" />);
     await screen.findByText("table-loaded");
 
     await user.click(screen.getByTestId("mock-delete-trigger"));
@@ -100,5 +105,32 @@ describe("TagManagement delete flow", () => {
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 
     expect(mockTagDeleteCall).not.toHaveBeenCalled();
+  });
+});
+
+describe("TagManagement URL routing", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockTagListCall.mockResolvedValue({});
+  });
+
+  it("should open the tag info view from a ?tag= deep link", async () => {
+    renderWithProviders(<TagManagement accessToken="sk-test" userID="user-1" userRole="Admin" />, {
+      searchParams: "?tag=prod-tag",
+    });
+    expect(await screen.findByTestId("tag-info")).toHaveAttribute("data-tag-id", "prod-tag");
+  });
+
+  it("should clear ?tag= from the URL when the info view is closed", async () => {
+    const user = userEvent.setup();
+    const onUrlUpdate = vi.fn();
+    renderWithProviders(<TagManagement accessToken="sk-test" userID="user-1" userRole="Admin" />, {
+      searchParams: "?tag=prod-tag",
+      onUrlUpdate,
+    });
+
+    await user.click(await screen.findByTestId("tag-info-close"));
+    await screen.findByText("table-loaded");
+    expect(onUrlUpdate.mock.calls.at(-1)?.[0].searchParams.has("tag")).toBe(false);
   });
 });

@@ -258,3 +258,17 @@ describe("AccessGroupsPage", () => {
     expect(screen.getByText("Admin Group")).toBeInTheDocument();
   });
 });
+
+describe("AccessGroupsPage URL routing", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseAccessGroups.mockReturnValue({ data: mockAccessGroups, isLoading: false });
+    mockUseDeleteAccessGroup.mockReturnValue({ mutate: mockMutate, isPending: false });
+    mockUseAuthorized.mockReturnValue({ userRole: "Admin", accessToken: "sk-test" });
+  });
+
+  it("should open the access group detail from an ?access_group= deep link", () => {
+    renderWithProviders(<AccessGroupsPage />, { searchParams: "?access_group=ag-99" });
+    expect(screen.getByText("Detail for ag-99")).toBeInTheDocument();
+  });
+});

@@ -1,5 +1,10 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
+import { withNuqsTestingAdapter } from "nuqs/adapters/testing";
+
+const render: typeof rtlRender = (ui, options) =>
+  rtlRender(ui, { wrapper: withNuqsTestingAdapter({ hasMemory: true }), ...options });
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import AgentInfoView from "./agent_info";
 import * as networking from "@/components/networking";

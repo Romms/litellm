@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { parseAsString, useQueryState } from "nuqs";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -31,7 +32,8 @@ const ClaudeCodePluginsPanel: React.FC<ClaudeCodePluginsPanelProps> = ({ accessT
     name: string;
     displayName: string;
   } | null>(null);
-  const [selectedSkill, setSelectedSkill] = useState<Plugin | null>(null);
+  const [selectedSkillId, setSelectedSkillId] = useQueryState("skill", parseAsString.withOptions({ history: "push" }));
+  const selectedSkill = selectedSkillId ? pluginsList.find((p) => p.id === selectedSkillId) ?? null : null;
 
   const isAdmin = userRole ? isAdminRole(userRole) : false;
 
@@ -82,7 +84,7 @@ const ClaudeCodePluginsPanel: React.FC<ClaudeCodePluginsPanelProps> = ({ accessT
       {selectedSkill ? (
         <SkillDetail
           skill={selectedSkill}
-          onBack={() => setSelectedSkill(null)}
+          onBack={() => void setSelectedSkillId(null)}
           isAdmin={isAdmin}
           accessToken={accessToken}
           onPublishClick={fetchPlugins}
@@ -107,10 +109,7 @@ const ClaudeCodePluginsPanel: React.FC<ClaudeCodePluginsPanelProps> = ({ accessT
             isLoading={isLoading}
             onDeleteClick={handleDeleteClick}
             isAdmin={isAdmin}
-            onPluginClick={(id) => {
-              const skill = pluginsList.find((p) => p.id === id);
-              if (skill) setSelectedSkill(skill);
-            }}
+            onPluginClick={(id) => void setSelectedSkillId(id)}
           />
         </>
       )}

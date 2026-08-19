@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { renderWithProviders } from "@/../tests/test-utils";
 import userEvent, { PointerEventsCheckLevel } from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -29,7 +30,10 @@ vi.mock("./PromptTable", () => ({
   ),
 }));
 
-vi.mock("./prompt_info", () => ({ __esModule: true, default: () => <div>prompt-info-view</div> }));
+vi.mock("./prompt_info", () => ({
+  __esModule: true,
+  default: ({ promptId }: { promptId: string }) => <div data-testid="prompt-info" data-prompt-id={promptId} />,
+}));
 vi.mock("./add_prompt_form", () => ({
   __esModule: true,
   default: ({ visible }: { visible: boolean }) => (visible ? <div>add-prompt-form</div> : null),
@@ -40,7 +44,7 @@ const mockGetPromptsList = vi.mocked(getPromptsList);
 const mockDeletePromptCall = vi.mocked(deletePromptCall);
 
 const renderPanel = (userRole?: string) =>
-  render(<PromptsPanel accessToken="sk-test" userRole={userRole ?? "Admin"} />);
+  renderWithProviders(<PromptsPanel accessToken="sk-test" userRole={userRole ?? "Admin"} />);
 
 describe("PromptsPanel loading state", () => {
   beforeEach(() => {
@@ -49,7 +53,7 @@ describe("PromptsPanel loading state", () => {
   });
 
   it("should resolve the loading state when accessToken is null instead of showing the skeleton forever", async () => {
-    render(<PromptsPanel accessToken={null} />);
+    renderWithProviders(<PromptsPanel accessToken={null} />);
     expect(await screen.findByText("table-loaded")).toBeInTheDocument();
     expect(mockGetPromptsList).not.toHaveBeenCalled();
   });
@@ -61,7 +65,7 @@ describe("PromptsPanel loading state", () => {
         resolveFetch = resolve;
       }) as never,
     );
-    render(<PromptsPanel accessToken="sk-test" userRole="Admin" />);
+    renderWithProviders(<PromptsPanel accessToken="sk-test" userRole="Admin" />);
     expect(screen.getByText("table-loading")).toBeInTheDocument();
 
     resolveFetch({ prompts: [] });
@@ -198,5 +202,19 @@ describe("PromptsPanel delete confirmation", () => {
 
     finishDelete();
     await waitFor(() => expect(screen.queryByText(/delete prompt: my-prompt/i)).not.toBeInTheDocument());
+  });
+});
+
+describe("PromptsPanel URL routing", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetPromptsList.mockResolvedValue({ prompts: [] });
+  });
+
+  it("should open the prompt info view from a ?prompt= deep link", async () => {
+    renderWithProviders(<PromptsPanel accessToken="sk-test" userRole="Admin" />, {
+      searchParams: "?prompt=prompt-7",
+    });
+    expect(await screen.findByTestId("prompt-info")).toHaveAttribute("data-prompt-id", "prompt-7");
   });
 });

@@ -5,6 +5,9 @@
 
 import { Plus, Wallet } from "lucide-react";
 import React, { useCallback, useState } from "react";
+import { useUrlTab } from "@/hooks/useUrlTab";
+
+const BUDGETS_PAGE_TABS = ["budgets", "examples"] as const;
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ToolbarSeparator } from "@/components/shared/ToolbarSeparator";
@@ -26,6 +29,7 @@ interface BudgetSettingsPageProps {
 
 const BudgetPanel: React.FC<BudgetSettingsPageProps> = ({ accessToken }) => {
   const [isCreateModelVisible, setIsCreateModelVisible] = useState(false);
+  const [activeTab, onTabChange] = useUrlTab({ tabs: BUDGETS_PAGE_TABS, defaultTab: "budgets" });
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedBudget, setSelectedBudget] = useState<budgetItem | null>(null);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
@@ -81,7 +85,7 @@ const BudgetPanel: React.FC<BudgetSettingsPageProps> = ({ accessToken }) => {
         title="Budgets"
         subtitle="Spend, TPM and RPM limits you can assign to customers."
       />
-      <Tabs defaultValue="budgets" className="min-h-0 flex-1 gap-0">
+      <Tabs value={activeTab} onValueChange={onTabChange} className="min-h-0 flex-1 gap-0">
         <div className="flex items-center gap-4 border-b border-border">
           {canModify && (
             <>

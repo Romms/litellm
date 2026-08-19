@@ -1,4 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { parseAsString, useQueryState } from "nuqs";
+import { useUrlTab } from "@/hooks/useUrlTab";
+
+const POLICIES_PAGE_TABS = ["templates", "policies", "attachments", "simulator"] as const;
 import { Alert, AlertDescription, AlertTitle, AlertAction } from "@/components/shared/Alert";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -95,8 +99,11 @@ const PoliciesPanel: React.FC<PoliciesPanelProps> = ({ accessToken, userRole }) 
   const [isAddPolicyModalVisible, setIsAddPolicyModalVisible] = useState(false);
   const [isAddAttachmentModalVisible, setIsAddAttachmentModalVisible] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<Policy | null>(null);
-  const [selectedPolicyId, setSelectedPolicyId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("templates");
+  const [selectedPolicyId, setSelectedPolicyId] = useQueryState(
+    "policy",
+    parseAsString.withOptions({ history: "push" }),
+  );
+  const [activeTab, setActiveTab] = useUrlTab({ tabs: POLICIES_PAGE_TABS, defaultTab: "templates" });
   const [isDeleting, setIsDeleting] = useState(false);
   const [policyToDelete, setPolicyToDelete] = useState<Policy | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -166,7 +173,7 @@ const PoliciesPanel: React.FC<PoliciesPanelProps> = ({ accessToken, userRole }) 
 
   const handleAddPolicy = () => {
     if (selectedPolicyId) {
-      setSelectedPolicyId(null);
+      void setSelectedPolicyId(null);
     }
     setEditingPolicy(null);
     setIsAddPolicyModalVisible(true);
@@ -446,10 +453,10 @@ const PoliciesPanel: React.FC<PoliciesPanelProps> = ({ accessToken, userRole }) 
           {selectedPolicyId ? (
             <PolicyInfoView
               policyId={selectedPolicyId}
-              onClose={() => setSelectedPolicyId(null)}
+              onClose={() => void setSelectedPolicyId(null)}
               onEdit={(policy) => {
                 setEditingPolicy(policy);
-                setSelectedPolicyId(null);
+                void setSelectedPolicyId(null);
                 setShowFlowBuilder(true);
               }}
               accessToken={accessToken}
@@ -465,7 +472,7 @@ const PoliciesPanel: React.FC<PoliciesPanelProps> = ({ accessToken, userRole }) 
                 setEditingPolicy(policy);
                 setShowFlowBuilder(true);
               }}
-              onViewClick={(policyId) => setSelectedPolicyId(policyId)}
+              onViewClick={(policyId) => void setSelectedPolicyId(policyId)}
               isAdmin={isAdmin}
             />
           )}

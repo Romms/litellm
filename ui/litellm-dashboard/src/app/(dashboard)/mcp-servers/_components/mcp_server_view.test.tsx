@@ -1,4 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { render as rtlRender, screen } from "@testing-library/react";
+import { withNuqsTestingAdapter } from "nuqs/adapters/testing";
+
+const render: typeof rtlRender = (ui, options) =>
+  rtlRender(ui, { wrapper: withNuqsTestingAdapter({ hasMemory: true }), ...options });
+
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MCPServerView } from "./mcp_server_view";
@@ -148,5 +153,22 @@ describe("MCPServerView", () => {
     await userEvent.click(screen.getByRole("tab", { name: "Settings" }));
 
     expect(await screen.findByText("All tools enabled")).toBeInTheDocument();
+  });
+
+  it("opens the MCP Tools tab from an ?info_tab= deep link", async () => {
+    rtlRender(
+      <MCPServerView
+        mcpServer={baseServer}
+        onBack={vi.fn()}
+        isProxyAdmin
+        isEditing={false}
+        accessToken="tok"
+        userRole="Admin"
+        userID="u1"
+        availableAccessGroups={[]}
+      />,
+      { wrapper: withNuqsTestingAdapter({ searchParams: "?info_tab=tools", hasMemory: true }) },
+    );
+    expect(await screen.findByRole("tab", { name: "MCP Tools", selected: true })).toBeInTheDocument();
   });
 });

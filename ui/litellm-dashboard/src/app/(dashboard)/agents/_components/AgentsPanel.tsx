@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { parseAsString, useQueryState } from "nuqs";
 import { Info, Plus } from "lucide-react";
 import { getAgentsList, deleteAgentCall } from "@/components/networking";
 import AddAgentForm from "./add_agent_form";
@@ -37,7 +38,7 @@ const AgentsPanel: React.FC<AgentsPanelProps> = ({ accessToken, userRole, teams 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isHealthCheckLoading, setIsHealthCheckLoading] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState<{ id: string; name: string } | null>(null);
-  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [selectedAgentId, setSelectedAgentId] = useQueryState("agent", parseAsString.withOptions({ history: "push" }));
   const [healthCheckEnabled, setHealthCheckEnabled] = useState(false);
 
   const isAdmin = userRole ? isAdminRole(userRole) : false;
@@ -97,7 +98,7 @@ const AgentsPanel: React.FC<AgentsPanelProps> = ({ accessToken, userRole, teams 
 
   const handleAddAgent = () => {
     if (selectedAgentId) {
-      setSelectedAgentId(null);
+      void setSelectedAgentId(null);
     }
     setIsAddModalVisible(true);
   };
@@ -164,7 +165,7 @@ const AgentsPanel: React.FC<AgentsPanelProps> = ({ accessToken, userRole, teams 
       {selectedAgentId ? (
         <AgentInfoView
           agentId={selectedAgentId}
-          onClose={() => setSelectedAgentId(null)}
+          onClose={() => void setSelectedAgentId(null)}
           accessToken={accessToken}
           isAdmin={isAdmin}
         />
@@ -176,7 +177,7 @@ const AgentsPanel: React.FC<AgentsPanelProps> = ({ accessToken, userRole, teams 
           healthCheckEnabled={healthCheckEnabled}
           isHealthCheckLoading={isHealthCheckLoading}
           onHealthCheckToggle={handleHealthCheckToggle}
-          onAgentClick={(id) => setSelectedAgentId(id)}
+          onAgentClick={(id) => void setSelectedAgentId(id)}
           onDeleteClick={handleDeleteClick}
         />
       )}

@@ -43,6 +43,10 @@ import { getSecureItem } from "@/utils/secureStorage";
 import { TOOLS_OAUTH_UI_STATE_KEY } from "@/hooks/mcpOAuthUtils";
 import UserEnvVarsModal from "./UserEnvVarsModal";
 import { listMCPUserEnvVarStatus } from "@/components/networking";
+import { useFillEnvVarsDeepLink, useServerDetailRouting } from "../serverDetailRouting";
+import { useUrlTab } from "@/hooks/useUrlTab";
+
+const MCP_PAGE_TABS = ["servers", "toolsets", "connect", "semantic-filter", "network-settings", "submitted"] as const;
 
 type SortKey = "created_desc" | "updated_desc" | "name_asc" | "health";
 
@@ -142,7 +146,16 @@ const MCPServers: React.FC<MCPServerProps> = ({ accessToken, userRole, userID })
   // first render. Cleared when the user navigates back to the list (handleBack)
   // so a later visit to the same server defaults to Overview, not the Tools tab.
   const [toolsTabServerId, setToolsTabServerId] = useState<string | null>(readToolsOAuthServerId);
-  const [selectedServerId, setSelectedServerId] = useState<string | null>(toolsTabServerId);
+  // The URL (?server=) is the source of truth for the open detail view, so the
+  // view survives refresh and the link is shareable; toolsTabServerId covers the
+  // first render after an OAuth redirect, before the hook writes it to the URL.
+  const {
+    serverId: selectedServerId,
+    openServer,
+    restoreServer,
+    close: closeServerDetail,
+  } = useServerDetailRouting(toolsTabServerId);
+  const [activeTab, onTabChange] = useUrlTab({ tabs: MCP_PAGE_TABS, defaultTab: "servers" });
   const [editServer, setEditServer] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
   const [selectedMcpAccessGroup, setSelectedMcpAccessGroup] = useState<string>("all");
@@ -152,11 +165,8 @@ const MCPServers: React.FC<MCPServerProps> = ({ accessToken, userRole, userID })
   const [prefillData, setPrefillData] = useState<DiscoverableMCPServer | null>(null);
   const [isDeletingServer, setIsDeletingServer] = useState(false);
   const [byokModalServer, setByokModalServer] = useState<MCPServer | null>(null);
-  // Per-user env-var fill modal target + deep-link source captured once from the URL.
   const [envVarsModalServer, setEnvVarsModalServer] = useState<MCPServer | null>(null);
-  const [deepLinkServerId, setDeepLinkServerId] = useState<string | null>(() =>
-    typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("fill_env_vars"),
-  );
+  const { deepLinkServerId, clear: clearEnvVarsDeepLink } = useFillEnvVarsDeepLink();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortKey, setSortKey] = useState<SortKey>("created_desc");
   const isInternalUser = userRole === "Internal User";
@@ -178,20 +188,6 @@ const MCPServers: React.FC<MCPServerProps> = ({ accessToken, userRole, userID })
     return map;
   }, [envVarStatuses]);
 
-  // Deep-link via ?fill_env_vars=<server_id> — the link users follow from the
-  // friendly error the proxy returns when a per-user var is missing. The id is
-  // captured into state above and resolved to a server below; here we only strip
-  // the param so a refresh doesn't reopen the modal.
-  useEffect(() => {
-    if (!deepLinkServerId || typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    if (!params.has("fill_env_vars")) return;
-    params.delete("fill_env_vars");
-    const newSearch = params.toString();
-    const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : "") + window.location.hash;
-    window.history.replaceState({}, "", newUrl);
-  }, [deepLinkServerId]);
-
   const deepLinkServer = useMemo(
     () => (deepLinkServerId ? serversWithHealth.find((s) => s.server_id === deepLinkServerId) ?? null : null),
     [deepLinkServerId, serversWithHealth],
@@ -209,13 +205,13 @@ const MCPServers: React.FC<MCPServerProps> = ({ accessToken, userRole, userID })
       }
       const parsed = JSON.parse(stored);
       if (parsed?.serverId) {
-        setSelectedServerId(parsed.serverId);
+        restoreServer(parsed.serverId);
         setEditServer(true);
       }
     } catch (err) {
       console.error("Failed to restore MCP edit view state", err);
     }
-  }, []);
+  }, [restoreServer]);
 
   // The restored server id was consumed by the initializer above; remove the
   // one-shot sessionStorage key so a full page reload doesn't reopen the Tools
@@ -357,7 +353,7 @@ const MCPServers: React.FC<MCPServerProps> = ({ accessToken, userRole, userID })
       // and show a phantom "Unnamed Server" page.
       if (selectedServerId === serverIdToDelete) {
         setEditServer(false);
-        setSelectedServerId(null);
+        closeServerDetail();
       }
       refetch();
     } catch (error) {
@@ -406,11 +402,11 @@ const MCPServers: React.FC<MCPServerProps> = ({ accessToken, userRole, userID })
   // Memoize the onBack callback to prevent unnecessary re-renders
   const handleBack = React.useCallback(() => {
     setEditServer(false);
-    setSelectedServerId(null);
+    closeServerDetail();
     // Drop the post-redirect one-shot so re-selecting that server opens Overview.
     setToolsTabServerId(null);
     refetch();
-  }, [refetch]);
+  }, [refetch, closeServerDetail]);
 
   if (!accessToken || !userRole || !userID) {
     return <div className="p-6 text-center text-gray-500">Missing required authentication parameters.</div>;
@@ -516,7 +512,7 @@ const MCPServers: React.FC<MCPServerProps> = ({ accessToken, userRole, userID })
           }}
           accessToken={accessToken}
         />
-        <Tabs defaultValue="servers" className="mt-2 w-full">
+        <Tabs value={activeTab} onValueChange={onTabChange} className="mt-2 w-full">
           <TabsList variant="line" className="h-auto w-full justify-start rounded-none border-b p-0">
             <TabsTrigger value="servers" className="flex-none rounded-none px-4 py-2">
               All Servers
@@ -686,7 +682,7 @@ const MCPServers: React.FC<MCPServerProps> = ({ accessToken, userRole, userID })
                           isLoadingHealth={isLoadingHealth}
                           isRechecking={recheckingServerIds?.has(server.server_id)}
                           onClick={() => {
-                            setSelectedServerId(server.server_id);
+                            openServer(server.server_id);
                             setEditServer(true);
                           }}
                           onRecheckHealth={
@@ -745,7 +741,7 @@ const MCPServers: React.FC<MCPServerProps> = ({ accessToken, userRole, userID })
           accessToken={accessToken}
           onClose={() => {
             setEnvVarsModalServer(null);
-            setDeepLinkServerId(null);
+            clearEnvVarsDeepLink();
           }}
           onSaved={() => {
             // Refresh the bulk status so the red "N user fields missing" footer

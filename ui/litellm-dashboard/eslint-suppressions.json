@@ -1236,9 +1236,6 @@
     },
     "no-nested-ternary": {
       "count": 1
-    },
-    "prefer-const": {
-      "count": 2
     }
   },
   "src/app/(dashboard)/search-tools/_components/CreateSearchTools.tsx": {
@@ -1385,9 +1382,6 @@
   },
   "src/app/(dashboard)/users/_components/view_users.tsx": {
     "local/filename-pascal-case": {
-      "count": 1
-    },
-    "prefer-const": {
       "count": 1
     },
     "react-hooks/set-state-in-effect": {
@@ -1674,7 +1668,7 @@
   },
   "src/components/Teams.tsx": {
     "local/no-complex-jsx-arrow": {
-      "count": 4
+      "count": 3
     },
     "max-lines": {
       "count": 1
@@ -1981,16 +1975,6 @@
   },
   "src/components/common_components/Filters/FilterInput.tsx": {
     "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
-  "src/components/common_components/MetadataKeyValueFields.test.tsx": {
-    "no-restricted-imports": {
-      "count": 1
-    }
-  },
-  "src/components/common_components/MetadataKeyValueFields.tsx": {
-    "no-restricted-imports": {
       "count": 1
     }
   },

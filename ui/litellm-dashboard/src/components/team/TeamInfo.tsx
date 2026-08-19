@@ -1,4 +1,5 @@
 import useAuthorized from "@/app/(dashboard)/hooks/useAuthorized";
+import { useUrlTab } from "@/hooks/useUrlTab";
 import useCan from "@/app/(dashboard)/hooks/useCan";
 import { organizationKeys, useOrganizations } from "@/app/(dashboard)/hooks/organizations/useOrganizations";
 import { useQueryClient } from "@tanstack/react-query";
@@ -85,6 +86,7 @@ import MyUserTab from "./MyUserTab";
 import {
   getTeamInfoDefaultTab,
   getTeamInfoVisibleTabs,
+  TEAM_INFO_TAB_VALUES,
   TEAM_INFO_TAB_KEYS,
   TEAM_INFO_TAB_LABELS,
 } from "./tabVisibilityUtils";
@@ -475,6 +477,12 @@ const TeamInfoView: React.FC<TeamInfoProps> = ({
   const canEditTeam = is_team_admin || is_proxy_admin || is_org_admin || isOrgAdminForTeam || isTeamAdminFromTeamData;
   const visibleTabs = useMemo(() => getTeamInfoVisibleTabs(canEditTeam), [canEditTeam]);
   const defaultTabKey = useMemo(() => getTeamInfoDefaultTab(editTeam, canEditTeam), [editTeam, canEditTeam]);
+  const [activeInfoTab, onInfoTabChange] = useUrlTab({
+    tabs: TEAM_INFO_TAB_VALUES,
+    defaultTab: defaultTabKey,
+    paramName: "info_tab",
+    clearOnDefault: false,
+  });
 
   const teamFormValues = (): TeamUpdateFormValues => {
     const info = teamData?.team_info;
@@ -972,7 +980,8 @@ const TeamInfoView: React.FC<TeamInfoProps> = ({
       </div>
 
       <Tabs
-        defaultActiveKey={defaultTabKey}
+        activeKey={activeInfoTab}
+        onChange={onInfoTabChange}
         className="mb-4"
         items={[
           {
