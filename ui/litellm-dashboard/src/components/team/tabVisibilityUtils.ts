@@ -55,6 +55,6 @@ export function getTeamInfoDefaultTab(editTeam: boolean, canEditTeam: boolean): 
  * Checks if a specific tab should be visible based on permissions.
  */
 export function isTeamInfoTabVisible(tabKey: string, canEditTeam: boolean): boolean {
-  const visibleTabs = getTeamInfoVisibleTabs(canEditTeam);
+  const visibleTabs: readonly string[] = getTeamInfoVisibleTabs(canEditTeam);
   return visibleTabs.includes(tabKey);
 }

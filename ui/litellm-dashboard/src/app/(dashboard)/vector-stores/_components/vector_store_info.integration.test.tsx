@@ -1,4 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { render as rtlRender, screen } from "@testing-library/react";
+import { withNuqsTestingAdapter } from "nuqs/adapters/testing";
+
+const render: typeof rtlRender = (ui, options) =>
+  rtlRender(ui, { wrapper: withNuqsTestingAdapter({ hasMemory: true }), ...options });
+
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
