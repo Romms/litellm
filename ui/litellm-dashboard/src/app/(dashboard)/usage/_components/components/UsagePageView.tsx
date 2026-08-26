@@ -63,6 +63,7 @@ import TopKeyView from "@/components/UsagePage/components/EntityUsage/TopKeyView
 import UsageAIChatPanel from "./UsageAIChatPanel";
 import { UsageOption, UsageViewSelect } from "./UsageViewSelect/UsageViewSelect";
 import { useUrlTab } from "@/hooks/useUrlTab";
+import { useUrlDateRange } from "@/hooks/useUrlDateRange";
 
 const USAGE_VIEWS = [
   "global",
@@ -75,6 +76,8 @@ const USAGE_VIEWS = [
   "user",
   "user-agent-activity",
 ] as const satisfies readonly UsageOption[];
+
+const ACTIVITY_TABS = ["cost", "models", "keys", "mcp", "endpoints"] as const;
 
 interface UsagePageProps {
   teams: Team[];
@@ -101,12 +104,13 @@ const UsagePage: React.FC<UsagePageProps> = ({ teams, organizations }) => {
   // Create initial dates outside of state to prevent recreation
   const initialFromDate = useMemo(() => new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), []);
   const initialToDate = useMemo(() => new Date(), []);
+  const defaultDateRange = useMemo<DateRangePickerValue>(
+    () => ({ from: initialFromDate, to: initialToDate }),
+    [initialFromDate, initialToDate],
+  );
 
   // Single date state that directly triggers data fetching
-  const [dateValue, setDateValue] = useState<DateRangePickerValue>({
-    from: initialFromDate,
-    to: initialToDate,
-  });
+  const [dateValue, setDateValue] = useUrlDateRange(defaultDateRange);
 
   const [allTags, setAllTags] = useState<EntityList[]>([]);
   const { data: customers = [] } = useCustomers();
@@ -125,7 +129,22 @@ const UsagePage: React.FC<UsagePageProps> = ({ teams, organizations }) => {
   const [isCloudZeroModalOpen, setIsCloudZeroModalOpen] = useState(false);
   const [isGlobalExportModalOpen, setIsGlobalExportModalOpen] = useState(false);
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
-  const [selectedUsageView, setUsageView] = useUrlTab({ tabs: USAGE_VIEWS, defaultTab: "global", paramName: "view" });
+  const [selectedUsageView, setSelectedUsageView] = useUrlTab({
+    tabs: USAGE_VIEWS,
+    defaultTab: "global",
+    paramName: "view",
+  });
+  const [activityTab, setActivityTab] = useUrlTab({ tabs: ACTIVITY_TABS, defaultTab: "cost" });
+  // Activity tabs belong to the Global and Your Usage views only, so carrying
+  // one into another view would leave ?tab= naming a tab that view never shows.
+  // The date range is meaningful everywhere and deliberately survives the switch.
+  const setUsageView = useCallback(
+    (value: string) => {
+      setSelectedUsageView(value);
+      setActivityTab("cost");
+    },
+    [setSelectedUsageView, setActivityTab],
+  );
   // Org-admin membership is read from the server, so unlike the other usage
   // views this one can be revoked while the page is open. Derive the view in
   // render rather than storing it, so the fallback lands on the same paint and
@@ -258,13 +277,16 @@ const UsagePage: React.FC<UsagePageProps> = ({ teams, organizations }) => {
   }, [aggregatedFailed, paginatedResult.loading, paginatedResult.data.results.length]);
 
   // Super responsive date change handler
-  const handleDateChange = useCallback((newValue: DateRangePickerValue) => {
-    // Instant visual feedback
-    setIsDateChanging(true);
+  const handleDateChange = useCallback(
+    (newValue: DateRangePickerValue) => {
+      // Instant visual feedback
+      setIsDateChanging(true);
 
-    // Update date immediately for UI responsiveness
-    setDateValue(newValue);
-  }, []);
+      // Update date immediately for UI responsiveness
+      setDateValue(newValue);
+    },
+    [setDateValue],
+  );
 
   // Derived states from userSpendData
   const totalSpend = userSpendData.metadata?.total_spend || 0;
@@ -522,7 +544,7 @@ const UsagePage: React.FC<UsagePageProps> = ({ teams, organizations }) => {
                   <UserDropdown value={selectedUserId} onChange={setSelectedUserId} />
                 </div>
               )}
-              <Tabs defaultValue="cost">
+              <Tabs value={activityTab} onValueChange={(value: unknown) => setActivityTab(String(value))}>
                 <div className="flex justify-between items-center">
                   <TabsList className="mt-1">
                     <TabsTrigger value="cost" className="flex-none px-3">
