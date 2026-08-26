@@ -1,4 +1,5 @@
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { renderWithProviders as render } from "@/../tests/test-utils";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
@@ -1131,6 +1132,31 @@ describe("EntityUsage", () => {
           null,
         );
       });
+    });
+  });
+  describe("url-backed activity tab", () => {
+    it("opens the tab named in the URL", async () => {
+      render(<EntityUsage {...defaultProps} />, { searchParams: "?tab=keys" });
+
+      expect(await screen.findByRole("tab", { name: "Key Activity" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("tab", { name: "Cost" })).toHaveAttribute("aria-selected", "false");
+    });
+
+    it("writes the picked tab to the URL", async () => {
+      const onUrlUpdate = vi.fn();
+      render(<EntityUsage {...defaultProps} />, { onUrlUpdate });
+
+      await userEvent.click(await screen.findByRole("tab", { name: "Endpoint Activity" }));
+
+      await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+      expect(onUrlUpdate.mock.calls.at(-1)?.[0].searchParams.get("tab")).toBe("endpoints");
+    });
+
+    it("falls back to Cost when the URL names a tab this entity type never builds", async () => {
+      render(<EntityUsage {...defaultProps} />, { searchParams: "?tab=agents" });
+
+      expect(await screen.findByRole("tab", { name: "Cost" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.queryByRole("tab", { name: "Agent Activity" })).not.toBeInTheDocument();
     });
   });
 });

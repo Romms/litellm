@@ -67,7 +67,7 @@ vi.mock("./pipeline_flow_builder", () => ({
 
 vi.mock("./policy_info", () => ({
   __esModule: true,
-  default: () => null,
+  default: ({ policyId }: { policyId: string }) => <div data-testid="policy-info" data-policy-id={policyId} />,
 }));
 
 vi.mock("./add_policy_form", () => ({
@@ -167,5 +167,21 @@ describe("PoliciesPanel attachment delete", () => {
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
+  });
+});
+
+describe("PoliciesPanel URL routing", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should open the policy info view from a ?policy= deep link once the Policies tab is opened", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<PoliciesPanel accessToken="test-token" userRole="Admin" />, {
+      searchParams: "?policy=pol-1",
+    });
+
+    await user.click(screen.getByRole("tab", { name: /^policies$/i }));
+    expect(await screen.findByTestId("policy-info")).toHaveAttribute("data-policy-id", "pol-1");
   });
 });

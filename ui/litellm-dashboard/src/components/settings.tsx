@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useUrlTab } from "@/hooks/useUrlTab";
 import { Controller, FormProvider, useForm, useFormContext } from "react-hook-form";
 
 import { Field, FieldError, FieldLabel } from "@/components/shared/form/field";
@@ -221,7 +222,16 @@ const buildCallbackPayload = (formValues: Record<string, any>, callbackName: str
   };
 };
 
+const SETTINGS_TABS = [
+  "logging-callbacks",
+  "cloudzero-cost-tracking",
+  "alerting-types",
+  "alerting-settings",
+  "email-alerts",
+] as const;
+
 const Settings: React.FC<SettingsPageProps> = ({ accessToken, userRole, userID, premiumUser }) => {
+  const [activeTab, setActiveTab] = useUrlTab({ tabs: SETTINGS_TABS, defaultTab: "logging-callbacks" });
   const [callbacks, setCallbacks] = useState<AlertingObject[]>([]);
   const [isLoadingCallbacks, setIsLoadingCallbacks] = useState(true);
   const [alerts, setAlerts] = useState<any[]>([]);
@@ -483,7 +493,7 @@ const Settings: React.FC<SettingsPageProps> = ({ accessToken, userRole, userID, 
   return (
     <div className="mx-4">
       <div className="grid grid-cols-1 gap-2 p-8 w-full mt-2">
-        <Tabs defaultValue="logging-callbacks">
+        <Tabs value={activeTab} onValueChange={(value: unknown) => setActiveTab(String(value))}>
           <TabsList variant="line">
             <TabsTrigger value="logging-callbacks">Logging Callbacks</TabsTrigger>
             <TabsTrigger value="cloudzero-cost-tracking">CloudZero Cost Tracking</TabsTrigger>

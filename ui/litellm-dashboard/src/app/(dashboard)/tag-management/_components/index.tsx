@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { parseAsString, useQueryState } from "nuqs";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TagInfoView from "./tag_info";
@@ -30,7 +31,7 @@ const TagManagement: React.FC<TagProps> = ({ accessToken, userID, userRole }) =>
   const [tags, setTags] = useState<Tag[]>([]);
   const [isLoadingTags, setIsLoadingTags] = useState(true);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
-  const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
+  const [selectedTagId, setSelectedTagId] = useQueryState("tag", parseAsString.withOptions({ history: "push" }));
   const [editTag, setEditTag] = useState<boolean>(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [tagToDelete, setTagToDelete] = useState<string | null>(null);
@@ -131,7 +132,7 @@ const TagManagement: React.FC<TagProps> = ({ accessToken, userID, userRole }) =>
         <TagInfoView
           tagId={selectedTagId}
           onClose={() => {
-            setSelectedTagId(null);
+            void setSelectedTagId(null);
             setEditTag(false);
           }}
           accessToken={accessToken}
@@ -172,11 +173,11 @@ const TagManagement: React.FC<TagProps> = ({ accessToken, userID, userRole }) =>
                 data={tags}
                 isLoading={isLoadingTags}
                 onEdit={(tag) => {
-                  setSelectedTagId(tag.name);
+                  void setSelectedTagId(tag.name);
                   setEditTag(true);
                 }}
                 onDelete={handleDelete}
-                onSelectTag={setSelectedTagId}
+                onSelectTag={(tagName) => void setSelectedTagId(tagName)}
               />
             </div>
           </div>

@@ -1292,4 +1292,52 @@ describe("UsagePage", () => {
       expect(screen.getByText("Endpoint Activity")).toBeInTheDocument();
     });
   });
+
+  describe("url-backed activity tab and date range", () => {
+    it("opens the activity tab named in the URL", async () => {
+      renderWithProviders(<UsagePage {...defaultProps} />, { searchParams: "?tab=keys" });
+
+      expect(await screen.findByRole("tab", { name: "Key Activity" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("tab", { name: "Cost" })).toHaveAttribute("aria-selected", "false");
+    });
+
+    it("writes the picked activity tab to the URL", async () => {
+      const onUrlUpdate = vi.fn();
+      renderWithProviders(<UsagePage {...defaultProps} />, { onUrlUpdate });
+
+      await userEvent.click(await screen.findByRole("tab", { name: "Model Activity" }));
+
+      await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+      expect(onUrlUpdate.mock.calls.at(-1)?.[0].searchParams.get("tab")).toBe("models");
+    });
+
+    it("writes a picked date range to the URL as ISO timestamps", async () => {
+      const onUrlUpdate = vi.fn();
+      renderWithProviders(<UsagePage {...defaultProps} />, { onUrlUpdate });
+
+      await userEvent.click(await screen.findByTestId("pick-a-different-range"));
+
+      await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+      const params = onUrlUpdate.mock.calls.at(-1)?.[0].searchParams;
+      expect(params.get("from")).toBe("2024-01-01T00:00:00.000Z");
+      expect(params.get("to")).toBe("2024-01-08T00:00:00.000Z");
+    });
+
+    it("drops the activity tab but keeps the date range when the view changes", async () => {
+      const onUrlUpdate = vi.fn();
+      renderWithProviders(<UsagePage {...defaultProps} />, {
+        searchParams: "?tab=mcp&from=2026-07-01T00:00:00.000Z&to=2026-07-15T00:00:00.000Z",
+        onUrlUpdate,
+      });
+
+      fireEvent.change(await screen.findByTestId("usage-view-select"), { target: { value: "team" } });
+
+      await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+      const params = onUrlUpdate.mock.calls.at(-1)?.[0].searchParams;
+      expect(params.get("view")).toBe("team");
+      expect(params.has("tab")).toBe(false);
+      expect(params.get("from")).toBe("2026-07-01T00:00:00.000Z");
+      expect(params.get("to")).toBe("2026-07-15T00:00:00.000Z");
+    });
+  });
 });

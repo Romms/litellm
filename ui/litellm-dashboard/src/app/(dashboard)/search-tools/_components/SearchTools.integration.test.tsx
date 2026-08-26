@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { withNuqsTestingAdapter } from "nuqs/adapters/testing";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -60,6 +61,7 @@ const renderPage = () => {
     <QueryClientProvider client={queryClient}>
       <SearchTools accessToken="test-token" userRole="Admin" userID="user-1" />
     </QueryClientProvider>,
+    { wrapper: withNuqsTestingAdapter({ hasMemory: true }) },
   );
 };
 

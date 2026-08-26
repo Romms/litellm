@@ -2,6 +2,7 @@ import { AccessGroupResponse, useAccessGroups } from "@/app/(dashboard)/hooks/ac
 import { useDeleteAccessGroup } from "@/app/(dashboard)/hooks/accessGroups/useDeleteAccessGroup";
 import { Plus, SearchIcon, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { parseAsString, useQueryState } from "nuqs";
 import DeleteResourceModal from "@/components/common_components/DeleteResourceModal";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -37,7 +38,10 @@ export function AccessGroupsPage() {
   const { data: groupsData, isLoading } = useAccessGroups();
   const groups = useMemo(() => (groupsData ?? []).map(mapResponseToAccessGroup), [groupsData]);
 
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useQueryState(
+    "access_group",
+    parseAsString.withOptions({ history: "push" }),
+  );
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [groupToDelete, setGroupToDelete] = useState<AccessGroup | null>(null);
@@ -55,7 +59,7 @@ export function AccessGroupsPage() {
   }, [groups, searchText]);
 
   if (selectedGroupId) {
-    return <AccessGroupDetail accessGroupId={selectedGroupId} onBack={() => setSelectedGroupId(null)} />;
+    return <AccessGroupDetail accessGroupId={selectedGroupId} onBack={() => void setSelectedGroupId(null)} />;
   }
 
   return (
@@ -100,7 +104,7 @@ export function AccessGroupsPage() {
         isLoading={isLoading}
         isFiltered={searchText.trim().length > 0}
         canModify={canModify}
-        onGroupClick={setSelectedGroupId}
+        onGroupClick={(groupId) => void setSelectedGroupId(groupId)}
         onDeleteClick={setGroupToDelete}
       />
 

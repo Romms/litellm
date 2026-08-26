@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { withNuqsTestingAdapter } from "nuqs/adapters/testing";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import PlaygroundPage from "./page";
 
@@ -42,7 +43,7 @@ describe("PlaygroundPage role guard", () => {
 
   it.each(["Internal Viewer", "Admin Viewer"])("blocks the entire playground for %s", (role) => {
     authState.userRole = role;
-    render(<PlaygroundPage />);
+    render(<PlaygroundPage />, { wrapper: withNuqsTestingAdapter({ hasMemory: true }) });
 
     expect(screen.getByText("Access Denied")).toBeInTheDocument();
     expect(screen.queryByRole("tab")).not.toBeInTheDocument();
@@ -54,7 +55,7 @@ describe("PlaygroundPage role guard", () => {
 
   it.each(["Admin", "Internal User", "Org Admin"])("renders the playground for %s", (role) => {
     authState.userRole = role;
-    render(<PlaygroundPage />);
+    render(<PlaygroundPage />, { wrapper: withNuqsTestingAdapter({ hasMemory: true }) });
 
     expect(screen.queryByText("Access Denied")).not.toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Chat" })).toBeInTheDocument();

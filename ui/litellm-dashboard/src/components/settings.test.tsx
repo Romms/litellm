@@ -1,4 +1,5 @@
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
+import { renderWithProviders as render } from "@/../tests/test-utils";
 import userEvent from "@testing-library/user-event";
 import { FormProvider, useForm } from "react-hook-form";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -286,6 +287,24 @@ describe("Settings", () => {
     });
 
     expect(getByText("CloudZero Cost Tracking")).toBeInTheDocument();
+  });
+  describe("url-backed page tab", () => {
+    it("opens the tab named in the URL", async () => {
+      render(<Settings {...defaultProps} />, { searchParams: "?tab=alerting-types" });
+
+      expect(await screen.findByRole("tab", { name: "Alerting Types" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("tab", { name: "Logging Callbacks" })).toHaveAttribute("aria-selected", "false");
+    });
+
+    it("writes the picked tab to the URL", async () => {
+      const onUrlUpdate = vi.fn();
+      render(<Settings {...defaultProps} />, { onUrlUpdate });
+
+      await userEvent.click(await screen.findByRole("tab", { name: "Email Alerts" }));
+
+      await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+      expect(onUrlUpdate.mock.calls.at(-1)?.[0].searchParams.get("tab")).toBe("email-alerts");
+    });
   });
 });
 

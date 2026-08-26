@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useUrlTab } from "@/hooks/useUrlTab";
 import { updatePassThroughEndpoint, deletePassThroughEndpointsCall } from "./networking";
 import { Eye, EyeOff } from "lucide-react";
 import { useWatch } from "react-hook-form";
@@ -130,6 +131,8 @@ const PasswordField: React.FC<{ value: Record<string, any> }> = ({ value }) => {
   );
 };
 
+const PASS_THROUGH_INFO_TABS = ["overview", "settings"] as const;
+
 const PassThroughInfoView: React.FC<PassThroughInfoProps> = ({
   endpointData: initialEndpointData,
   onClose,
@@ -139,6 +142,11 @@ const PassThroughInfoView: React.FC<PassThroughInfoProps> = ({
   onEndpointUpdated,
 }) => {
   const [endpointData, setEndpointData] = useState<PassThroughEndpoint | null>(initialEndpointData);
+  const [activeTab, setActiveTab] = useUrlTab({
+    tabs: PASS_THROUGH_INFO_TABS,
+    defaultTab: "overview",
+    paramName: "info_tab",
+  });
   const [loading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [guardrails, setGuardrails] = useState<
@@ -243,7 +251,7 @@ const PassThroughInfoView: React.FC<PassThroughInfoProps> = ({
         </div>
       </div>
 
-      <Tabs defaultValue="overview">
+      <Tabs value={activeTab} onValueChange={(value: unknown) => setActiveTab(String(value))}>
         <TabsList variant="line" className="mb-4 h-auto w-full justify-start rounded-none border-b p-0">
           <TabsTrigger value="overview" className="flex-none rounded-none px-4 py-2">
             Overview

@@ -1,4 +1,5 @@
 import React from "react";
+import { withNuqsTestingAdapter } from "nuqs/adapters/testing";
 import { fireEvent, render, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -56,6 +57,7 @@ describe("CostOptimizationView daily activity", () => {
       <QueryClientProvider client={queryClient}>
         <CostOptimizationView accessToken="test-token" userId="u1" userRole="proxy_admin" />
       </QueryClientProvider>,
+      { wrapper: withNuqsTestingAdapter({ hasMemory: true }) },
     );
 
     await waitFor(() => expect(mockUserDailyActivityCall).toHaveBeenCalledTimes(1));

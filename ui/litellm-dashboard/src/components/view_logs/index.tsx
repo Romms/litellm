@@ -1,5 +1,5 @@
-import { useState } from "react";
 import useCan from "@/app/(dashboard)/hooks/useCan";
+import { useUrlTab } from "@/hooks/useUrlTab";
 import DeletedKeysPage from "../DeletedKeysPage/DeletedKeysPage";
 import DeletedTeamsPage from "../DeletedTeamsPage/DeletedTeamsPage";
 import AuditLogsPanel from "./AuditLogsPanel";
@@ -15,20 +15,21 @@ interface SpendLogsTableProps {
   premiumUser: boolean;
 }
 
-type LogsTabId = "request logs" | "audit logs" | "deleted keys" | "deleted teams";
+const LOGS_TAB_IDS = ["request-logs", "audit-logs", "deleted-keys", "deleted-teams"] as const;
+type LogsTabId = (typeof LOGS_TAB_IDS)[number];
 
 interface LogsTab {
   id: LogsTabId;
   label: string;
 }
 
-const REQUEST_LOGS_TAB: LogsTab = { id: "request logs", label: "Request Logs" };
-const AUDIT_LOGS_TAB: LogsTab = { id: "audit logs", label: "Audit Logs" };
-const DELETED_KEYS_TAB: LogsTab = { id: "deleted keys", label: "Deleted Keys" };
-const DELETED_TEAMS_TAB: LogsTab = { id: "deleted teams", label: "Deleted Teams" };
+const REQUEST_LOGS_TAB: LogsTab = { id: "request-logs", label: "Request Logs" };
+const AUDIT_LOGS_TAB: LogsTab = { id: "audit-logs", label: "Audit Logs" };
+const DELETED_KEYS_TAB: LogsTab = { id: "deleted-keys", label: "Deleted Keys" };
+const DELETED_TEAMS_TAB: LogsTab = { id: "deleted-teams", label: "Deleted Teams" };
 
 export default function SpendLogsTable({ accessToken, token, userRole, userID, premiumUser }: SpendLogsTableProps) {
-  const [activeTab, setActiveTab] = useState<LogsTabId>(REQUEST_LOGS_TAB.id);
+  const [activeTab, onTabChange] = useUrlTab({ tabs: LOGS_TAB_IDS, defaultTab: REQUEST_LOGS_TAB.id });
   const canViewAuditLogs = useCan("viewAuditLogs");
   const canViewDeletedTeams = useCan("viewDeletedTeams");
 
@@ -49,37 +50,37 @@ export default function SpendLogsTable({ accessToken, token, userRole, userID, p
 
   const renderPanel = (tabId: LogsTabId) => {
     switch (tabId) {
-      case "request logs":
+      case "request-logs":
         return (
           <RequestLogsPanel
             accessToken={accessToken}
             token={token}
             userRole={userRole}
             userID={userID}
-            isActive={activeTab === "request logs"}
+            isActive={activeTab === "request-logs"}
           />
         );
-      case "audit logs":
+      case "audit-logs":
         return (
           <AuditLogsPanel
             userID={userID}
             userRole={userRole}
             token={token}
             accessToken={accessToken}
-            isActive={activeTab === "audit logs"}
+            isActive={activeTab === "audit-logs"}
             premiumUser={premiumUser}
           />
         );
-      case "deleted keys":
+      case "deleted-keys":
         return <DeletedKeysPage />;
-      case "deleted teams":
+      case "deleted-teams":
         return <DeletedTeamsPage />;
     }
   };
 
   return (
     <div className="box-border w-full overflow-x-hidden p-6">
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as LogsTabId)}>
+      <Tabs value={activeTab} onValueChange={onTabChange}>
         <TabsList variant="line">
           {tabs.map((tab) => (
             <TabsTrigger key={tab.id} value={tab.id} className="flex-none">

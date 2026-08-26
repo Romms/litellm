@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { parseAsString, useQueryState } from "nuqs";
 import { Button } from "@/components/ui/button";
 import { deletePassThroughEndpointsCall, getPassThroughEndpointsCall } from "../networking";
 import AddPassThroughEndpoint from "../add_pass_through";
@@ -30,7 +31,10 @@ export interface passThroughItem {
 const PassThroughSettings: React.FC<PassThroughSettingsProps> = ({ accessToken, userRole, userID, premiumUser }) => {
   const [generalSettings, setGeneralSettings] = useState<passThroughItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedEndpointId, setSelectedEndpointId] = useState<string | null>(null);
+  const [selectedEndpointId, setSelectedEndpointId] = useQueryState(
+    "endpoint",
+    parseAsString.withOptions({ history: "push" }),
+  );
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [endpointToDelete, setEndpointToDelete] = useState<string | null>(null);
 
@@ -103,7 +107,7 @@ const PassThroughSettings: React.FC<PassThroughSettingsProps> = ({ accessToken, 
     return (
       <PassThroughInfoView
         endpointData={selectedEndpoint}
-        onClose={() => setSelectedEndpointId(null)}
+        onClose={() => void setSelectedEndpointId(null)}
         accessToken={accessToken}
         isAdmin={userRole === "Admin" || userRole === "admin"}
         premiumUser={premiumUser}
@@ -129,7 +133,7 @@ const PassThroughSettings: React.FC<PassThroughSettingsProps> = ({ accessToken, 
       <PassThroughEndpointsTable
         endpoints={generalSettings}
         isLoading={isLoading}
-        onEndpointClick={setSelectedEndpointId}
+        onEndpointClick={(id) => void setSelectedEndpointId(id)}
         onDeleteClick={handleDelete}
       />
 

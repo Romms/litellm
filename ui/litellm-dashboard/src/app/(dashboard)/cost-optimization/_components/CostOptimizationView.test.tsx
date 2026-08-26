@@ -1,4 +1,5 @@
 import React from "react";
+import { withNuqsTestingAdapter } from "nuqs/adapters/testing";
 import { fireEvent, render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -33,6 +34,7 @@ const renderView = (userRole = "Admin") => {
     <QueryClientProvider client={queryClient}>
       <CostOptimizationView accessToken="test-token" userId="u1" userRole={userRole} />
     </QueryClientProvider>,
+    { wrapper: withNuqsTestingAdapter({ hasMemory: true }) },
   );
 };
 

@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { renderWithProviders } from "@/../tests/test-utils";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -39,7 +40,10 @@ vi.mock("./PluginTable", () => ({
 }));
 
 vi.mock("./add_plugin_form", () => ({ __esModule: true, default: () => null }));
-vi.mock("@/components/claude_code_plugins/skill_detail", () => ({ __esModule: true, default: () => null }));
+vi.mock("@/components/claude_code_plugins/skill_detail", () => ({
+  __esModule: true,
+  default: ({ skill }: { skill: { id: string } }) => <div data-testid="skill-detail" data-skill-id={skill.id} />,
+}));
 
 const mockGetClaudeCodePluginsList = vi.mocked(getClaudeCodePluginsList);
 const mockDeleteClaudeCodePlugin = vi.mocked(deleteClaudeCodePlugin);
@@ -57,7 +61,7 @@ describe("ClaudeCodePluginsPanel loading state", () => {
   });
 
   it("should resolve the loading state when accessToken is null instead of showing the skeleton forever", async () => {
-    render(<ClaudeCodePluginsPanel accessToken={null} />);
+    renderWithProviders(<ClaudeCodePluginsPanel accessToken={null} />);
     expect(await screen.findByText("table-loaded")).toBeInTheDocument();
     expect(mockGetClaudeCodePluginsList).not.toHaveBeenCalled();
   });
@@ -69,7 +73,7 @@ describe("ClaudeCodePluginsPanel loading state", () => {
         resolveFetch = resolve;
       }),
     );
-    render(<ClaudeCodePluginsPanel accessToken="sk-test" userRole="Admin" />);
+    renderWithProviders(<ClaudeCodePluginsPanel accessToken="sk-test" userRole="Admin" />);
     expect(screen.getByText("table-loading")).toBeInTheDocument();
 
     resolveFetch({ plugins: [], count: 0 });
@@ -86,7 +90,7 @@ describe("ClaudeCodePluginsPanel delete confirmation", () => {
 
   it("should ask for confirmation before deleting and name the skill", async () => {
     const user = userEvent.setup();
-    render(<ClaudeCodePluginsPanel accessToken="sk-test" userRole="Admin" />);
+    renderWithProviders(<ClaudeCodePluginsPanel accessToken="sk-test" userRole="Admin" />);
 
     await user.click(await screen.findByTestId("row-delete-plugin-1"));
 
@@ -99,7 +103,7 @@ describe("ClaudeCodePluginsPanel delete confirmation", () => {
   it("should delete the skill and refresh the list once confirmed", async () => {
     const user = userEvent.setup();
     mockDeleteClaudeCodePlugin.mockResolvedValue({});
-    render(<ClaudeCodePluginsPanel accessToken="sk-test" userRole="Admin" />);
+    renderWithProviders(<ClaudeCodePluginsPanel accessToken="sk-test" userRole="Admin" />);
 
     await user.click(await screen.findByTestId("row-delete-plugin-1"));
     await screen.findByText(/are you sure you want to delete skill/i);
@@ -112,7 +116,7 @@ describe("ClaudeCodePluginsPanel delete confirmation", () => {
 
   it("should not delete the skill when the confirmation is cancelled", async () => {
     const user = userEvent.setup();
-    render(<ClaudeCodePluginsPanel accessToken="sk-test" userRole="Admin" />);
+    renderWithProviders(<ClaudeCodePluginsPanel accessToken="sk-test" userRole="Admin" />);
 
     await user.click(await screen.findByTestId("row-delete-plugin-1"));
     await screen.findByText(/are you sure you want to delete skill/i);
@@ -120,5 +124,19 @@ describe("ClaudeCodePluginsPanel delete confirmation", () => {
 
     await waitFor(() => expect(screen.queryByText(/are you sure you want to delete skill/i)).not.toBeInTheDocument());
     expect(mockDeleteClaudeCodePlugin).not.toHaveBeenCalled();
+  });
+});
+
+describe("ClaudeCodePluginsPanel URL routing", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetClaudeCodePluginsList.mockResolvedValue({ plugins: [skill] });
+  });
+
+  it("should open the skill detail view from a ?skill= deep link once the list loads", async () => {
+    renderWithProviders(<ClaudeCodePluginsPanel accessToken="sk-test" userRole="Admin" />, {
+      searchParams: "?skill=plugin-1",
+    });
+    expect(await screen.findByTestId("skill-detail")).toHaveAttribute("data-skill-id", "plugin-1");
   });
 });

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useUrlTab } from "@/hooks/useUrlTab";
 import { Spin, Descriptions } from "antd";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -47,7 +48,11 @@ const AgentInfoView: React.FC<AgentInfoViewProps> = ({ agentId, onClose, accessT
   const agentKeys = keysData?.keys ?? [];
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useUrlTab({
+    tabs: ["overview", "settings"] as const,
+    defaultTab: "overview",
+    paramName: "info_tab",
+  });
   const [isSaving, setIsSaving] = useState(false);
   const form = useForm<AgentFormValues>({ defaultValues: {} });
   const panels = useCollapsiblePanels([AGENT_FORM_CONFIG.basic.key]);

@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { renderWithProviders as render } from "@/../tests/test-utils";
 import userEvent from "@testing-library/user-event";
 import React, { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -1722,6 +1723,24 @@ describe("ModelInfoView", () => {
 
         expect(payload.litellm_params.cache_control_injection_points).toEqual([{ location: "message", index: "2" }]);
       });
+    });
+  });
+  describe("url-backed info tab", () => {
+    it("opens the tab named in the URL", async () => {
+      render(<ModelInfoView {...DEFAULT_ADMIN_PROPS} />, { wrapper, searchParams: "?info_tab=raw" });
+
+      expect(await screen.findByRole("tab", { name: "Raw JSON" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("aria-selected", "false");
+    });
+
+    it("writes the picked tab to the URL", async () => {
+      const onUrlUpdate = vi.fn();
+      render(<ModelInfoView {...DEFAULT_ADMIN_PROPS} />, { wrapper, onUrlUpdate });
+
+      await userEvent.click(await screen.findByRole("tab", { name: "Raw JSON" }));
+
+      await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+      expect(onUrlUpdate.mock.calls.at(-1)?.[0].searchParams.get("info_tab")).toBe("raw");
     });
   });
 });

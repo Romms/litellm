@@ -290,3 +290,47 @@ test("should keep unsaved settings edits when switching tabs and back", async ()
 
   expect(screen.getByLabelText(/Organization Name/i)).toHaveValue("Renamed Org");
 });
+
+describe("url-backed info tab", () => {
+  it("opens the tab named in the URL", async () => {
+    mockUseOrganization.mockReturnValue({ data: mockOrg, isLoading: false } as any);
+
+    renderWithProviders(
+      <OrganizationInfoView
+        organizationId="org_123"
+        onClose={() => {}}
+        accessToken="test-token"
+        is_org_admin={false}
+        is_proxy_admin={false}
+        userModels={[]}
+        editOrg={false}
+      />,
+      { searchParams: "?info_tab=members" },
+    );
+
+    expect(await screen.findByRole("tab", { name: "Members" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("writes the picked tab to the URL", async () => {
+    mockUseOrganization.mockReturnValue({ data: mockOrg, isLoading: false } as any);
+    const onUrlUpdate = vi.fn();
+
+    renderWithProviders(
+      <OrganizationInfoView
+        organizationId="org_123"
+        onClose={() => {}}
+        accessToken="test-token"
+        is_org_admin={false}
+        is_proxy_admin={false}
+        userModels={[]}
+        editOrg={false}
+      />,
+      { onUrlUpdate },
+    );
+
+    await userEvent.click(await screen.findByRole("tab", { name: "Settings" }));
+
+    await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+    expect(onUrlUpdate.mock.calls.at(-1)?.[0].searchParams.get("info_tab")).toBe("settings");
+  });
+});

@@ -1,5 +1,8 @@
 import type { DateRangePickerValue } from "@/components/shared/date_picker_types";
 import React, { useEffect, useState } from "react";
+import { useUrlTab } from "@/hooks/useUrlTab";
+
+const CACHING_PAGE_TABS = ["analytics", "health", "settings", "coordination"] as const;
 import { toast } from "@/lib/toast";
 import AdvancedDatePicker from "@/components/shared/advanced_date_picker";
 import { BarChart } from "@/components/shared/charts";
@@ -72,6 +75,7 @@ const CacheDashboard: React.FC<CachePageProps> = ({ accessToken, token, userRole
   const anchor1 = useComboboxAnchor();
   const anchor2 = useComboboxAnchor();
   const [selectedApiKeys, setSelectedApiKeys] = useState<string[]>([]);
+  const [activeTab, onTabChange] = useUrlTab({ tabs: CACHING_PAGE_TABS, defaultTab: "analytics" });
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
 
   const [dateValue, setDateValue] = useState<DateRangePickerValue>({
@@ -139,7 +143,7 @@ const CacheDashboard: React.FC<CachePageProps> = ({ accessToken, token, userRole
   ];
 
   return (
-    <Tabs defaultValue="analytics" className="mt-2 mb-8 w-full gap-2 p-8">
+    <Tabs value={activeTab} onValueChange={onTabChange} className="mt-2 mb-8 w-full gap-2 p-8">
       <div className="mt-2 flex w-full items-center justify-between">
         <TabsList>
           <TabsTrigger value="analytics" className="flex-none">
