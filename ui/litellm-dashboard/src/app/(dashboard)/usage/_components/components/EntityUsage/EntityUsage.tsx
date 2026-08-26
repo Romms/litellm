@@ -1,4 +1,5 @@
 import useTeams from "@/app/(dashboard)/hooks/useTeams";
+import { useUrlTab } from "@/hooks/useUrlTab";
 import { BarChart, DonutChart } from "@/components/shared/charts";
 import { DataTable } from "@/components/shared/DataTable";
 import {
@@ -108,6 +109,8 @@ const ENTITY_CAPABILITIES: Partial<Record<EntityType, Capability>> = {
   organization: "viewOrganizationUsage",
   agent: "viewAgentUsage",
 };
+
+const ENTITY_USAGE_TABS = ["cost", "models", "agents", "keys", "endpoints"] as const;
 
 const EntityUsage: React.FC<EntityUsageProps> = ({
   accessToken,
@@ -641,6 +644,12 @@ const EntityUsage: React.FC<EntityUsageProps> = ({
     { key: "endpoints", label: "Endpoint Activity", content: <EndpointUsage userSpendData={spendData} /> },
   ];
 
+  const [urlTab, setActiveTab] = useUrlTab({ tabs: ENTITY_USAGE_TABS, defaultTab: "cost" });
+  // ?tab= can name a tab this entity type never builds (agents only appears for
+  // teams), so resolve it against the built list rather than handing Tabs a
+  // value with no matching panel.
+  const activeTab = tabs.some(({ key }) => key === urlTab) ? urlTab : "cost";
+
   return (
     <div style={{ width: "100%" }} className="relative">
       {isFetchingMore && (
@@ -708,7 +717,7 @@ const EntityUsage: React.FC<EntityUsageProps> = ({
         filterOptions={getAllTags() || undefined}
         teams={teams || []}
       />
-      <Tabs defaultValue={tabs[0].key}>
+      <Tabs value={activeTab} onValueChange={(value: unknown) => setActiveTab(String(value))}>
         <TabsList className="mt-1">
           {tabs.map(({ key, label }) => (
             <TabsTrigger key={key} value={key} className="flex-none px-3">
