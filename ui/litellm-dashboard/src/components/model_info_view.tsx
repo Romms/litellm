@@ -1,6 +1,7 @@
 import { useModelCostMap } from "@/app/(dashboard)/hooks/models/useModelCostMap";
 import { useModelHub, useModelsInfo } from "@/app/(dashboard)/hooks/models/useModels";
 import { useQueryClient } from "@tanstack/react-query";
+import { useUrlTab } from "@/hooks/useUrlTab";
 import { transformModelData } from "@/app/(dashboard)/models-and-endpoints/utils/modelDataTransformer";
 import { InfoCircleOutlined } from "@ant-design/icons";
 import { KeyIcon, RefreshIcon, TrashIcon } from "@heroicons/react/outline";
@@ -114,6 +115,8 @@ const buildComplexityRouterTestTargets = (
   return buildAutoRouterTestTargets(testTargetParams);
 };
 
+const MODEL_INFO_TABS = ["overview", "raw"] as const;
+
 export default function ModelInfoView({
   modelId,
   onClose,
@@ -124,6 +127,11 @@ export default function ModelInfoView({
   modelAccessGroups,
 }: ModelInfoViewProps) {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useUrlTab({
+    tabs: MODEL_INFO_TABS,
+    defaultTab: "overview",
+    paramName: "info_tab",
+  });
   const [localModelData, setLocalModelData] = useState<any>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -662,7 +670,7 @@ export default function ModelInfoView({
         </div>
       </div>
 
-      <Tabs defaultValue="overview">
+      <Tabs value={activeTab} onValueChange={(value: unknown) => setActiveTab(String(value))}>
         <TabsList variant="line" className="mb-6 h-auto w-full justify-start rounded-none border-b p-0">
           <TabsTrigger value="overview" className="flex-none rounded-none px-4 py-2">
             Overview

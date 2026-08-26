@@ -26,10 +26,14 @@ interface ProviderOptions {
 }
 
 export const renderWithProviders = (ui: React.ReactElement, options?: RenderOptions & ProviderOptions) => {
-  const { searchParams, onUrlUpdate, ...renderOptions } = options ?? {};
+  // A caller-supplied wrapper nests inside these providers rather than replacing
+  // them, so passing one cannot silently strip the URL and query clients out.
+  const { searchParams, onUrlUpdate, wrapper: Wrapper, ...renderOptions } = options ?? {};
   const Providers: React.FC<PropsWithChildren> = ({ children }) => (
     <NuqsTestingAdapter searchParams={searchParams} onUrlUpdate={onUrlUpdate} hasMemory>
-      <QueryClientProvider client={testQueryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={testQueryClient}>
+        {Wrapper ? <Wrapper>{children}</Wrapper> : children}
+      </QueryClientProvider>
     </NuqsTestingAdapter>
   );
   return render(ui, { wrapper: Providers, ...renderOptions });

@@ -1,4 +1,5 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
+import { renderWithProviders as render } from "@/../tests/test-utils";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -111,5 +112,21 @@ describe("PassThroughSettings", () => {
     await waitFor(() => {
       expect(mockDeleteEndpoint).toHaveBeenCalledWith("token", "ep-1");
     });
+  });
+  it("opens the endpoint named in the URL", async () => {
+    render(<PassThroughSettings {...defaultProps} />, { searchParams: "?endpoint=ep-1" });
+
+    expect(await screen.findByTestId("endpoint-info")).toHaveTextContent("ep-1");
+  });
+
+  it("writes the opened endpoint to the URL", async () => {
+    const onUrlUpdate = vi.fn();
+    const user = userEvent.setup();
+    render(<PassThroughSettings {...defaultProps} />, { onUrlUpdate });
+
+    await user.click(await screen.findByText("open-ep-1"));
+
+    await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+    expect(onUrlUpdate.mock.calls.at(-1)?.[0].searchParams.get("endpoint")).toBe("ep-1");
   });
 });

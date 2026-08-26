@@ -1,5 +1,6 @@
 import type { DateRangePickerValue } from "@/components/shared/date_picker_types";
 import React, { useCallback, useMemo, useState } from "react";
+import { parseAsString, useQueryState } from "nuqs";
 import { formatDate } from "@/components/networking";
 import AdvancedDatePicker from "@/components/shared/advanced_date_picker";
 import { GuardrailDetail } from "./GuardrailDetail";
@@ -16,7 +17,8 @@ const defaultStart = new Date();
 defaultStart.setDate(defaultStart.getDate() - 7);
 
 export default function GuardrailsMonitorView({ accessToken = null }: GuardrailsMonitorViewProps) {
-  const [view, setView] = useState<View>({ type: "overview" });
+  const [guardrailId, setGuardrailId] = useQueryState("guardrail", parseAsString.withOptions({ history: "push" }));
+  const view: View = guardrailId ? { type: "detail", guardrailId } : { type: "overview" };
 
   const initialFrom = useMemo(() => new Date(defaultStart), []);
   const initialTo = useMemo(() => new Date(defaultEnd), []);
@@ -34,11 +36,11 @@ export default function GuardrailsMonitorView({ accessToken = null }: Guardrails
   }, []);
 
   const handleSelectGuardrail = (id: string) => {
-    setView({ type: "detail", guardrailId: id });
+    void setGuardrailId(id);
   };
 
   const handleBack = () => {
-    setView({ type: "overview" });
+    void setGuardrailId(null);
   };
 
   return (

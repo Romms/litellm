@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { renderWithProviders as render } from "@/../tests/test-utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 import GuardrailsMonitorView from "./GuardrailsMonitorView";
@@ -7,6 +8,12 @@ import * as networking from "@/components/networking";
 vi.mock("@/components/networking", () => ({
   getGuardrailsUsageOverview: vi.fn(),
   formatDate: vi.fn((d: Date) => d.toISOString().slice(0, 10)),
+}));
+
+vi.mock("./GuardrailDetail", () => ({
+  GuardrailDetail: ({ guardrailId }: { guardrailId: string }) => (
+    <div data-testid="guardrail-detail">{guardrailId}</div>
+  ),
 }));
 
 const mockGetGuardrailsUsageOverview = vi.mocked(networking.getGuardrailsUsageOverview);
@@ -41,5 +48,25 @@ describe("GuardrailsMonitorView", () => {
   it("should render without crashing when accessToken is null", async () => {
     render(<GuardrailsMonitorView accessToken={null} />, { wrapper });
     expect(await screen.findByRole("heading", { name: /Guardrails Monitor/i })).toBeInTheDocument();
+  });
+  it("opens the guardrail named in the URL", async () => {
+    render(<GuardrailsMonitorView accessToken="test-token" />, { wrapper, searchParams: "?guardrail=g-1" });
+
+    expect(await screen.findByTestId("guardrail-detail")).toHaveTextContent("g-1");
+  });
+
+  it("returns to the overview when the param is cleared", async () => {
+    mockGetGuardrailsUsageOverview.mockResolvedValue({
+      rows: [],
+      chart: [],
+      totalRequests: 0,
+      totalBlocked: 0,
+      passRate: 100,
+    });
+
+    render(<GuardrailsMonitorView accessToken="test-token" />, { wrapper });
+
+    expect(await screen.findByRole("heading", { name: /Guardrails Monitor/i })).toBeInTheDocument();
+    expect(screen.queryByTestId("guardrail-detail")).not.toBeInTheDocument();
   });
 });

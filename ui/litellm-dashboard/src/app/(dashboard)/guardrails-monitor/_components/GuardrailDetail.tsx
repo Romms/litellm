@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Settings, Shield, TriangleAlert } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import { useUrlTab } from "@/hooks/useUrlTab";
 import { getGuardrailsUsageDetail, getGuardrailsUsageLogs } from "@/components/networking";
 import { StatusBadge, type StatusTone } from "@/components/shared/table_cells/status_badge";
 import { Badge } from "@/components/ui/badge";
@@ -26,8 +27,14 @@ const STATUS_TONE: Record<string, StatusTone> = {
   critical: "error",
 };
 
+const GUARDRAIL_DETAIL_TABS = ["overview", "logs"] as const;
+
 export function GuardrailDetail({ guardrailId, onBack, accessToken = null, startDate, endDate }: GuardrailDetailProps) {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useUrlTab({
+    tabs: GUARDRAIL_DETAIL_TABS,
+    defaultTab: "overview",
+    paramName: "info_tab",
+  });
   const [evaluationModalOpen, setEvaluationModalOpen] = useState(false);
   const [logsPage] = useState(1);
   const logsPageSize = 50;
@@ -158,7 +165,7 @@ export function GuardrailDetail({ guardrailId, onBack, accessToken = null, start
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as string)}>
+      <Tabs value={activeTab} onValueChange={(value: unknown) => setActiveTab(String(value))}>
         <TabsList variant="line">
           <TabsTrigger value="overview" className="flex-none">
             Overview

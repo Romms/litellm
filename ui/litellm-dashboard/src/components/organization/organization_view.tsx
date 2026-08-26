@@ -2,6 +2,7 @@ import { useTeams } from "@/app/(dashboard)/hooks/teams/useTeams";
 import { organizationKeys, useOrganization } from "@/app/(dashboard)/hooks/organizations/useOrganizations";
 import { useQueryClient } from "@tanstack/react-query";
 import { useVisitedTabs } from "@/hooks/useVisitedTabs";
+import { useUrlTab } from "@/hooks/useUrlTab";
 import { MoneyCell } from "@/components/shared/table_cells";
 import CopyButton from "@/components/shared/CopyButton";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,8 @@ interface OrganizationInfoProps {
   editOrg: boolean;
 }
 
+const ORGANIZATION_VIEW_TABS = ["overview", "members", "settings"] as const;
+
 const OrganizationInfoView: React.FC<OrganizationInfoProps> = ({
   organizationId,
   onClose,
@@ -53,7 +56,16 @@ const OrganizationInfoView: React.FC<OrganizationInfoProps> = ({
   const [selectedEditMember, setSelectedEditMember] = useState<Member | null>(null);
   const canEditOrg = is_org_admin || is_proxy_admin;
   const { data: teams } = useTeams();
-  const { onTabChange, hasVisited } = useVisitedTabs(editOrg ? "settings" : "overview");
+  const defaultOrgTab = editOrg ? "settings" : "overview";
+  const { onTabChange, hasVisited } = useVisitedTabs(defaultOrgTab);
+  // clearOnDefault stays off because the default depends on editOrg, and
+  // clearing the param would snap a shared link back to that other tab.
+  const [activeTab, setActiveTab] = useUrlTab({
+    tabs: ORGANIZATION_VIEW_TABS,
+    defaultTab: defaultOrgTab,
+    paramName: "info_tab",
+    clearOnDefault: false,
+  });
 
   const teamAliasMap = useMemo(() => createTeamAliasMap(teams), [teams]);
 
@@ -158,7 +170,14 @@ const OrganizationInfoView: React.FC<OrganizationInfoProps> = ({
         </div>
       </div>
 
-      <Tabs defaultValue={editOrg ? "settings" : "overview"} onValueChange={onTabChange} className="mb-4">
+      <Tabs
+        value={activeTab}
+        onValueChange={(value: unknown) => {
+          onTabChange(value);
+          setActiveTab(String(value));
+        }}
+        className="mb-4"
+      >
         <TabsList variant="line" className="h-auto w-full justify-start rounded-none border-b p-0">
           <TabsTrigger value="overview" className="flex-none rounded-none px-4 py-2">
             Overview

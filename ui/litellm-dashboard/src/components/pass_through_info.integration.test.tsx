@@ -31,7 +31,11 @@ const endpoint = {
   methods: ["GET"],
 };
 
-const renderView = (premiumUser = true, data = endpoint) =>
+const renderView = (
+  premiumUser = true,
+  data = endpoint,
+  options: { searchParams?: string; onUrlUpdate?: (event: { searchParams: URLSearchParams }) => void } = {},
+) =>
   renderWithProviders(
     <PassThroughInfoView
       endpointData={data}
@@ -40,6 +44,7 @@ const renderView = (premiumUser = true, data = endpoint) =>
       isAdmin
       premiumUser={premiumUser}
     />,
+    options,
   );
 
 const openEditForm = async (user: User) => {
@@ -178,5 +183,23 @@ describe("pass_through_info update payload", () => {
 
     await waitFor(() => expect(updatePassThroughEndpoint).toHaveBeenCalled());
     expect(updatePassThroughEndpoint).toHaveBeenCalledTimes(1);
+  });
+  describe("url-backed info tab", () => {
+    it("opens the tab named in the URL", async () => {
+      renderView(true, endpoint, { searchParams: "?info_tab=settings" });
+
+      expect(await screen.findByRole("tab", { name: "Settings" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("aria-selected", "false");
+    });
+
+    it("writes the picked tab to the URL", async () => {
+      const onUrlUpdate = vi.fn();
+      renderView(true, endpoint, { onUrlUpdate });
+
+      await userEvent.click(await screen.findByRole("tab", { name: "Settings" }));
+
+      await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+      expect(onUrlUpdate.mock.calls.at(-1)?.[0].searchParams.get("info_tab")).toBe("settings");
+    });
   });
 });

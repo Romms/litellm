@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { renderWithProviders as render } from "@/../tests/test-utils";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GuardrailDetail } from "./GuardrailDetail";
 
@@ -39,10 +40,14 @@ const defaultProps = {
   endDate: "2026-07-24",
 };
 
-function renderDetail(props: Partial<typeof defaultProps> = {}) {
+function renderDetail(
+  props: Partial<typeof defaultProps> = {},
+  options: { searchParams?: string; onUrlUpdate?: (event: { searchParams: URLSearchParams }) => void } = {},
+) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(<GuardrailDetail {...defaultProps} {...props} />, {
     wrapper: ({ children }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>,
+    ...options,
   });
 }
 
@@ -141,5 +146,23 @@ describe("GuardrailDetail", () => {
     renderDetail({ accessToken: null });
     expect(mockGetGuardrailsUsageDetail).not.toHaveBeenCalled();
     expect(mockGetGuardrailsUsageLogs).not.toHaveBeenCalled();
+  });
+  describe("url-backed info tab", () => {
+    it("opens the tab named in the URL", async () => {
+      renderDetail({}, { searchParams: "?info_tab=logs" });
+
+      expect(await screen.findByRole("tab", { name: "Logs" })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("aria-selected", "false");
+    });
+
+    it("writes the picked tab to the URL", async () => {
+      const onUrlUpdate = vi.fn();
+      renderDetail({}, { onUrlUpdate });
+
+      await userEvent.click(await screen.findByRole("tab", { name: "Logs" }));
+
+      await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+      expect(onUrlUpdate.mock.calls.at(-1)?.[0].searchParams.get("info_tab")).toBe("logs");
+    });
   });
 });
